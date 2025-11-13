@@ -1,220 +1,279 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8" />
-  <title>Painel Postos - Alloha Fibra</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <style>
+<meta charset="UTF-8">
+<title>Painel de Postos - Alloha Fibra</title>
+
+<!-- Leaflet Map -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+
+<style>
     body {
-      margin: 0;
-      font-family: "Segoe UI", Arial, sans-serif;
-      background: #ffffff;
-      color: #001059;
-      display: flex;
-      height: 100vh;
-      overflow: hidden;
+        margin: 0;
+        font-family: "Segoe UI", Arial, sans-serif;
+        background: #F3F6FB;
+        display: flex;
+        height: 100vh;
+        overflow: hidden;
     }
 
-    header {
-      background: #001059;
-      padding: 10px 20px;
-      display: flex;
-      align-items: center;
-      gap: 20px;
-      color: white;
-    }
-    header img {
-      height: 45px;
-    }
-
-    #sidebar {
-      width: 350px;
-      background: #f6f8fb;
-      padding: 15px;
-      overflow-y: auto;
-      border-right: 3px solid #001059;
+    /* Sidebar Azul */
+    .sidebar {
+        width: 300px;
+        background: #001059;
+        color: white;
+        padding: 30px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
     }
 
-    h2 { margin-top: 0; }
+    .sidebar img {
+        width: 150px;
+        margin-bottom: 20px;
+    }
+
+    .sidebar h1 {
+        font-size: 22px;
+        margin: 0;
+    }
+
+    /* Área de filtros e lista */
+    .filters {
+        width: 350px;
+        background: #FFFFFF;
+        border-right: 3px solid #001059;
+        padding: 25px;
+        overflow-y: auto;
+    }
+
+    label {
+        font-weight: bold;
+        color: #001059;
+        margin-top: 10px;
+        display: block;
+    }
 
     select, input {
-      width: 100%;
-      padding: 10px;
-      margin-top: 10px;
-      border-radius: 8px;
-      border: 2px solid #001059;
-      font-size: 14px;
+        width: 100%;
+        padding: 10px;
+        border: 2px solid #001059;
+        border-radius: 8px;
+        margin-top: 5px;
+        outline: none;
     }
 
-    .lista {
-      margin-top: 20px;
-      background: white;
-      padding: 10px;
-      border-radius: 10px;
-      border: 2px solid #001059;
-      max-height: 40vh;
-      overflow-y: auto;
+    #listaPostos {
+        margin-top: 20px;
+        padding: 0;
+        list-style: none;
     }
 
-    .item {
-      padding: 8px;
-      border-bottom: 1px solid #ddd;
+    .postoItem {
+        background: #F3F6FB;
+        padding: 10px;
+        margin-bottom: 10px;
+        border-left: 5px solid #001059;
+        border-radius: 6px;
     }
-
-    .item:last-child { border-bottom: none; }
 
     .badge {
-      display: inline-block;
-      padding: 4px 8px;
-      border-radius: 6px;
-      color: white;
-      font-size: 12px;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: bold;
+        color: white;
     }
 
-    .verde { background: #48EF6C; color:#001059; font-weight:bold; }
+    .acima { background: #E53935; }
+    .abaixo { background: #43A047; }
+    .media { background: #1E88E5; }
+    .bloqueado { background: #555; }
 
+    /* MAPA */
     #map {
-      flex: 1;
-      margin: 20px;
-      border-radius: 20px;
-      border: 4px solid #001059;
+        flex: 1;
+        height: 100vh;
+        border-left: 3px solid #001059;
+        border-radius: 20px;
+        margin: 15px;
     }
-  </style>
+
+    /* Responsividade */
+    @media (max-width: 900px) {
+        body { flex-direction: column; }
+        .sidebar { width: 100%; height: auto; text-align: center; }
+        .filters { width: 100%; border-right: none; border-top: 3px solid #001059; }
+        #map { height: 400px; }
+    }
+</style>
 </head>
 
 <body>
-  <header>
-    <img src="logo_alloha_positivo.png" />
-    <h1>Painel de Postos - Alloha Fibra</h1>
-  </header>
 
-  <div id="sidebar">
-    <h2>Filtros</h2>
+<!-- BARRA LATERAL -->
+<div class="sidebar">
+    <img src="logo_alloha_positivo.png">
+    <h1>Painel de Postos</h1>
+    <p>Alloha Fibra</p>
+</div>
 
+<!-- FILTROS -->
+<div class="filters">
+    <h2 style="color:#001059;">Filtros</h2>
+
+    <label>UF</label>
     <select id="filtroUF"></select>
+
+    <label>Cidade</label>
     <select id="filtroCidade"></select>
-    <input type="text" id="filtroPosto" placeholder="Pesquisar por nome" />
-    <input type="text" id="filtroEndereco" placeholder="Pesquisar por endereço" />
 
-    <h2>Postos Abaixo da Média</h2>
-    <div class="lista" id="listaAbaixo"></div>
-  </div>
+    <label>Pesquisar por nome</label>
+    <input type="text" id="filtroNome" placeholder="Digite o nome">
 
-  <div id="map"></div>
+    <label>Pesquisar por endereço</label>
+    <input type="text" id="filtroEndereco" placeholder="Digite o endereço">
+
+    <h2 style="margin-top:20px;color:#001059;">Postos</h2>
+    <ul id="listaPostos"></ul>
+</div>
+
+<!-- MAPA -->
+<div id="map"></div>
 
 <script>
-let dados = [];
-let mapa;
+let mapa = L.map('map').setView([-14.2, -51.9], 4);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 18,
+}).addTo(mapa);
+
 let marcadores = [];
+let dadosCSV = [];
 
-async function carregarCSV() {
-  const resp = await fetch("postos-mapa.csv");
-  const txt = await resp.text();
-  const linhas = txt.split("
-").map(l => l.split(","));
-  const cab = linhas[0];
+/* ==== LER O CSV DO REPOSITÓRIO ==== */
+fetch("postos-mapa.csv")
+    .then(res => res.text())
+    .then(csv => processarCSV(csv));
 
-  dados = linhas.slice(1).map(l => {
-    return {
-      nome: l[cab.indexOf("Nome EC")],
-      cidade: l[cab.indexOf("Cidade EC")],
-      uf: l[cab.indexOf("UF EC")],
-      endereco: l[cab.indexOf("Logradouro EC")],
-      desvio: parseFloat(l[cab.indexOf("Desvio de Preço (%)")]) || 0,
-      blacklist: l[cab.indexOf("Blacklist")],
-      preco: parseFloat(l[cab.indexOf("Preço por Litro")]) || 0
-    };
-  });
+/* PARSE CSV */
+function processarCSV(texto) {
+    const linhas = texto.split("\n").slice(1);
 
-  dados = dados.filter(d => d.blacklist && d.blacklist.includes("Abaixo"));
+    dadosCSV = linhas.map(l => {
+        const c = l.split(",");
 
-  await geocodificarTodos();
-  popularFiltros();
-  atualizar();
+        return {
+            nome: c[0],
+            endereco: c[1],
+            cidade: c[2],
+            uf: c[3],
+            media: parseFloat(c[4]),
+            preco: parseFloat(c[5]),
+            status: c[6], // acima / abaixo / media / bloqueado
+            lat: parseFloat(c[7]),
+            lng: parseFloat(c[8])
+        };
+    });
+
+    preencherFiltros();
+    atualizarInterface();
 }
 
-async function geocodificarTodos() {
-  for (let d of dados) {
-    const q = encodeURIComponent(`${d.endereco}, ${d.cidade} - ${d.uf}`);
-    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${q}`;
-    const r = await fetch(url);
-    const j = await r.json();
-    if (j[0]) {
-      d.lat = parseFloat(j[0].lat);
-      d.lng = parseFloat(j[0].lon);
-    }
-  }
+/* FILTROS DINÂMICOS */
+function preencherFiltros() {
+    let estados = [...new Set(dadosCSV.map(p => p.uf))].sort();
+    let cidades = [...new Set(dadosCSV.map(p => p.cidade))].sort();
+
+    const filtroUF = document.getElementById("filtroUF");
+    const filtroCidade = document.getElementById("filtroCidade");
+
+    filtroUF.innerHTML = "<option value=''>Todos</option>";
+    estados.forEach(uf => filtroUF.innerHTML += `<option>${uf}</option>`);
+
+    filtroCidade.innerHTML = "<option value=''>Todas</option>";
+    cidades.forEach(c => filtroCidade.innerHTML += `<option>${c}</option>`);
+
+    filtroUF.onchange =
+    filtroCidade.onchange =
+    document.getElementById("filtroNome").oninput =
+    document.getElementById("filtroEndereco").oninput =
+        atualizarInterface;
 }
 
-function popularFiltros() {
-  const ufSel = document.getElementById("filtroUF");
-  const cidadeSel = document.getElementById("filtroCidade");
+/* APLICAR FILTROS */
+function atualizarInterface() {
 
-  const ufs = [...new Set(dados.map(x => x.uf))].sort();
-  ufSel.innerHTML = `<option value="">UF</option>` + ufs.map(u => `<option>${u}</option>`).join("");
+    let uf = filtroUF.value;
+    let cidade = filtroCidade.value.toLowerCase();
+    let nome = filtroNome.value.toLowerCase();
+    let end = filtroEndereco.value.toLowerCase();
 
-  const cidades = [...new Set(dados.map(x => x.cidade))].sort();
-  cidadeSel.innerHTML = `<option value="">Cidade</option>` + cidades.map(c => `<option>${c}</option>`).join("");
+    let filtrados = dadosCSV.filter(p =>
+        (uf === "" || p.uf === uf) &&
+        (cidade === "" || p.cidade.toLowerCase().includes(cidade)) &&
+        (nome === "" || p.nome.toLowerCase().includes(nome)) &&
+        (end === "" || p.endereco.toLowerCase().includes(end))
+    );
 
-  ufSel.onchange = atualizar;
-  cidadeSel.onchange = atualizar;
-  document.getElementById("filtroPosto").onkeyup = atualizar;
-  document.getElementById("filtroEndereco").onkeyup = atualizar;
+    atualizarLista(filtrados);
+    atualizarMapa(filtrados);
 }
 
-function atualizar() {
-  const uf = document.getElementById("filtroUF").value;
-  const cidade = document.getElementById("filtroCidade").value;
-  const p = document.getElementById("filtroPosto").value.toLowerCase();
-  const e = document.getElementById("filtroEndereco").value.toLowerCase();
-
-  let filtrados = dados.filter(d =>
-    (uf ? d.uf === uf : true) &&
-    (cidade ? d.cidade === cidade : true) &&
-    (p ? d.nome.toLowerCase().includes(p) : true) &&
-    (e ? d.endereco.toLowerCase().includes(e) : true)
-  );
-
-  atualizarLista(filtrados);
-  atualizarMapa(filtrados);
-}
-
+/* LISTA LATERAL */
 function atualizarLista(lista) {
-  const el = document.getElementById("listaAbaixo");
-  el.innerHTML = lista.map(d => `
-    <div class="item">
-      <b>${d.nome}</b><br>
-      ${d.endereco}<br>
-      <span class="badge verde">Abaixo da média</span><br>
-      Preço: R$ ${d.preco.toFixed(2)}<br>
-      Desvio: ${d.desvio.toFixed(2)}%
-    </div>
-  `).join("");
+    const ul = document.getElementById("listaPostos");
+    ul.innerHTML = "";
+
+    lista.forEach(p => {
+        let cor = p.status === "acima" ? "acima" :
+                  p.status === "abaixo" ? "abaixo" :
+                  p.status === "media" ? "media" : "bloqueado";
+
+        ul.innerHTML += `
+            <li class="postoItem">
+                <strong>${p.nome}</strong><br>
+                ${p.endereco}<br>
+                <span class="badge ${cor}">${p.status.toUpperCase()}</span>
+            </li>
+        `;
+    });
 }
 
+/* MAPA */
 function atualizarMapa(lista) {
-  marcadores.forEach(m => mapa.removeLayer(m));
-  marcadores = [];
+    marcadores.forEach(m => mapa.removeLayer(m));
+    marcadores = [];
 
-  lista.forEach(d => {
-    if (d.lat && d.lng) {
-      const m = L.marker([d.lat, d.lng]).addTo(mapa).bindPopup(`<b>${d.nome}</b><br>${d.endereco}`);
-      marcadores.push(m);
-    }
-  });
+    lista.forEach(p => {
+        if (!p.lat || !p.lng) return;
 
-  if (marcadores.length > 0) {
-    const g = new L.featureGroup(marcadores);
-    mapa.fitBounds(g.getBounds(), { padding: [30, 30] });
-  }
+        let cor = p.status === "acima" ? "red" :
+                  p.status === "abaixo" ? "green" :
+                  p.status === "media" ? "blue" : "gray";
+
+        let marker = L.circleMarker([p.lat, p.lng], {
+            radius: 8,
+            fillColor: cor,
+            color: "#001059",
+            weight: 2,
+            fillOpacity: 0.8
+        }).addTo(mapa);
+
+        marker.bindPopup(`
+            <strong>${p.nome}</strong><br>
+            ${p.endereco}<br>
+            Cidade: ${p.cidade} - ${p.uf}<br>
+            Preço: R$ ${p.preco.toFixed(2)}<br>
+            Média: R$ ${p.media.toFixed(2)}<br>
+            <span style="color:${cor};font-weight:bold">${p.status.toUpperCase()}</span>
+        `);
+
+        marcadores.push(marker);
+    });
 }
 
-window.onload = () => {
-  mapa = L.map("map").setView([-15.78, -47.93], 4);
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {}).addTo(mapa);
-  carregarCSV();
-};
 </script>
 </body>
 </html>
