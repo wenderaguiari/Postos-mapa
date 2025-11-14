@@ -222,7 +222,6 @@
     }
   </style>
 </head>
-
 <body>
   <div class="loader" id="loader"></div>
 
@@ -380,7 +379,6 @@
         desvioNum: parseDesvio(row["Desvio de Preço (%)"]),
         blacklist: row["Blacklist"],
         status: classificarStatus(row["Blacklist"]),
-
         _marker: null,
       }));
 
@@ -402,78 +400,46 @@
       markersLayer = L.layerGroup().addTo(map);
     }
 
-    // Cache de coordenadas
+    // Cache de coordenadas para evitar repetição de requisições
     const geocodeCache = {};
-    // --------- MAPA + ZOOM CORRIGIDO ---------
+
+    // Função genérica para geocodificar (endereço, cidade ou UF)
+    async function geocodificar(q) {
+      if (geocodeCache[q]) return geocodeCache[q];
+
+      const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(
+        q
+      )}`;
+
+      try {
+        const r = await fetch(url);
+        const d = await r.json();
+        if (!d.length) return null;
+
+        const coords = [parseFloat(d[0].lat), parseFloat(d[0].lon)];
+        geocodeCache[q] = coords;
+        return coords;
+      } catch (e) {
+        console.error("Erro ao geocodificar:", q, e);
+        return null;
+      }
+    }
+
     async function atualizarMapa(lista) {
       markersLayer.clearLayers();
 
-      const uf = document.getElementById("filtroUF").value;
-      const cidade = document.getElementById("filtroCidade").value;
-
-      // --- ZOOM POR UF OU CIDADE (CORRIGIDO) ---
-      try {
-        if (cidade && uf) {
-          const qCidade = `${cidade}, ${uf}, Brasil`;
-
-          if (!geocodeCache[qCidade]) {
-            const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(qCidade)}`;
-            const r = await fetch(url);
-            const d = await r.json();
-            if (d.length > 0) {
-              geocodeCache[qCidade] = [parseFloat(d[0].lat), parseFloat(d[0].lon)];
-            }
-          }
-
-          if (geocodeCache[qCidade]) {
-            map.setView(geocodeCache[qCidade], 12);
-          }
-        }
-
-        else if (uf) {
-          const qUF = `${uf}, Brasil`;
-
-          if (!geocodeCache[qUF]) {
-            const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(qUF)}`;
-            const r = await fetch(url);
-            const d = await r.json();
-            if (d.length > 0) {
-              geocodeCache[qUF] = [parseFloat(d[0].lat), parseFloat(d[0].lon)];
-            }
-          }
-
-          if (geocodeCache[qUF]) {
-            map.setView(geocodeCache[qUF], 6);
-          }
-        }
-      } catch (e) {
-        console.warn("Erro no zoom:", e);
-      }
-
-      // --- MARCADORES (10 mais baratos) ---
       const abaixo = lista
         .filter((p) => p.status === "abaixo" || p.status === "media")
         .sort((a, b) => a.precoNum - b.precoNum)
         .slice(0, 10);
 
+      // 1) Adiciona marcadores normalmente (10 mais baratos)
       for (const p of abaixo) {
-        const q = `${p.endereco}, ${p.cidade} - ${p.uf}`;
+        const qPosto = `${p.endereco}, ${p.cidade}, ${p.uf}, Brasil`;
+        const coordsPosto = await geocodificar(qPosto);
+        if (!coordsPosto) continue;
 
-        if (!geocodeCache[q]) {
-          const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(q)}`;
-          try {
-            const r = await fetch(url);
-            const d = await r.json();
-            if (!d.length) continue;
-
-            geocodeCache[q] = [parseFloat(d[0].lat), parseFloat(d[0].lon)];
-          } catch (e) {
-            console.error("Erro ao geocodificar:", q);
-            continue;
-          }
-        }
-
-        const [lat, lon] = geocodeCache[q];
+        const [lat, lon] = coordsPosto;
 
         const m = L.circleMarker([lat, lon], {
           radius: 6,
@@ -484,10 +450,49 @@
         }).addTo(markersLayer);
 
         m.bindPopup(
-          `<strong>${p.nome}</strong><br>${p.endereco}<br>${p.cidade} - ${p.uf}<br>R$ ${fmt2(p.precoNum)}`
+          `<strong>${p.nome}</strong><br>${p.endereco}<br>${p.cidade} - ${p.uf}<br>R$ ${fmt2(
+            p.precoNum
+          )}`
         );
 
         p._marker = m;
+      }
+
+      // 2) CONTROLE DE ZOOM BASEADO EM UF / CIDADE (INDEPENDENTE DOS MARCADORES)
+      const uf = document.getElementById("filtroUF").value;
+      const cid = document.getElementById("filtroCidade").value;
+      const pontos = markersLayer.getLayers();
+
+      // Caso 1: Cidade + UF selecionados → centraliza na cidade
+      if (cid && uf) {
+        const qCidade = `${cid}, ${uf}, Brasil`;
+        const coordsCidade = await geocodificar(qCidade);
+
+        if (coordsCidade) {
+          map.setView([coordsCidade[0], coordsCidade[1]], 12);
+          return;
+        }
+      }
+
+      // Caso 2: só UF selecionada → centraliza na UF
+      if (!cid && uf) {
+        const qUF = `${uf}, Brasil`;
+        const coordsUF = await geocodificar(qUF);
+
+        if (coordsUF) {
+          map.setView([coordsUF[0], coordsUF[1]], 6);
+          return;
+        }
+      }
+
+      // Caso 3: sem UF/cidade → usa os marcadores (se existirem) ou Brasil
+      if (pontos.length === 1) {
+        const c = pontos[0].getLatLng();
+        map.setView([c.lat, c.lng], 12);
+      } else if (pontos.length > 1) {
+        map.fitBounds(markersLayer.getBounds(), { padding: [30, 30] });
+      } else {
+        map.setView([-14.5, -51.5], 4);
       }
     }
 
@@ -496,12 +501,14 @@
       const ufSel = document.getElementById("filtroUF");
       const mercSel = document.getElementById("filtroMercadoria");
 
+      // UFs
       [...new Set(postos.map((p) => p.uf))]
         .sort()
         .forEach((u) => {
           ufSel.innerHTML += `<option value="${u}">${u}</option>`;
         });
 
+      // Mercadorias
       [...new Set(postos.map((p) => p.mercadoria))]
         .sort()
         .forEach((m) => {
@@ -533,12 +540,15 @@
       atualizarInterface();
     }
 
+    // --------- FILTRAR ---------
     function filtrar() {
       const uf = document.getElementById("filtroUF").value;
       const cid = document.getElementById("filtroCidade").value;
       const m = document.getElementById("filtroMercadoria").value;
       const nome = document.getElementById("filtroNome").value.toLowerCase();
-      const end = document.getElementById("filtroEndereco").value.toLowerCase();
+      const end = document
+        .getElementById("filtroEndereco")
+        .value.toLowerCase();
 
       return postos.filter(
         (p) =>
@@ -550,6 +560,7 @@
       );
     }
 
+    // --------- UI ---------
     function atualizarInterface() {
       const list = filtrar();
       atualizarStats(list);
@@ -559,10 +570,21 @@
     }
 
     function atualizarStats(list) {
-      document.getElementById("statsAbaixo").textContent = list.filter((p) => p.status === "abaixo").length;
-      document.getElementById("statsMedia").textContent = list.filter((p) => p.status === "media").length;
-      document.getElementById("statsAcima").textContent = list.filter((p) => p.status === "acima").length;
-      document.getElementById("statsMuito").textContent = list.filter((p) => p.status === "muito_acima").length;
+      document.getElementById("statsAbaixo").textContent = list.filter(
+        (p) => p.status === "abaixo"
+      ).length;
+
+      document.getElementById("statsMedia").textContent = list.filter(
+        (p) => p.status === "media"
+      ).length;
+
+      document.getElementById("statsAcima").textContent = list.filter(
+        (p) => p.status === "acima"
+      ).length;
+
+      document.getElementById("statsMuito").textContent = list.filter(
+        (p) => p.status === "muito_acima"
+      ).length;
     }
 
     function atualizarLista(list) {
@@ -574,7 +596,9 @@
         .sort((a, b) => a.precoNum - b.precoNum)
         .slice(0, 10);
 
-      document.getElementById("countLista").textContent = `(${top.length})`;
+      document.getElementById(
+        "countLista"
+      ).textContent = `(${top.length})`;
 
       top.forEach((p) => {
         div.innerHTML += `
@@ -595,7 +619,9 @@
         .filter((p) => p.status === "acima" || p.status === "muito_acima")
         .sort((a, b) => b.desvioNum - a.desvioNum);
 
-      document.getElementById("countTabela").textContent = `(${crit.length})`;
+      document.getElementById(
+        "countTabela"
+      ).textContent = `(${crit.length})`;
 
       crit.forEach((p) => {
         tbody.innerHTML += `
