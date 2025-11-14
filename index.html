@@ -4,16 +4,15 @@
   <meta charset="UTF-8" />
   <title>Painel de Postos - Alloha Fibra</title>
 
-  <!-- Leaflet -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <!-- Leaflet (Mapa) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-  <!-- PapaParse -->
+  <!-- PapaParse (Leitura CSV) -->
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 
   <style>
     * { box-sizing: border-box; }
-
     body {
       margin: 0;
       font-family: "Segoe UI", Arial, sans-serif;
@@ -24,7 +23,6 @@
       overflow: hidden;
     }
 
-    /* Sidebar */
     .sidebar {
       width: 260px;
       background: #001059;
@@ -33,16 +31,15 @@
       display: flex;
       flex-direction: column;
       gap: 16px;
-      box-shadow: 4px 0 10px rgba(0,0,0,0.25);
+      box-shadow: 4px 0 10px rgba(0, 0, 0, 0.25);
       z-index: 10;
     }
 
-    .sidebar-logo { display: flex; justify-content: center; margin-bottom: 10px; }
-    .sidebar-logo img { max-width: 160px; height: auto; }
+    .sidebar-logo { display: flex; justify-content: center; }
+    .sidebar-logo img { max-width: 160px; }
 
     .sidebar-title-main { font-size: 18px; font-weight: 600; }
     .sidebar-title-sub { font-size: 13px; opacity: 0.9; }
-    .sidebar-info { font-size: 11px; opacity: 0.8; margin-top: 8px; }
 
     .tag {
       display: inline-block;
@@ -51,7 +48,7 @@
       border-radius: 999px;
       border: 1px solid #48ef6c;
       color: #48ef6c;
-      background: rgba(72,239,108,0.15);
+      background: rgba(72, 239, 108, 0.15);
       margin-top: 6px;
     }
 
@@ -67,16 +64,6 @@
       overflow-y: auto;
     }
 
-    .main-panel h2 { margin: 0 0 4px; font-size: 16px; }
-    .main-panel small { color: #6b7280; font-size: 11px; }
-
-    .filtros {
-      margin-top: 8px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
     label {
       font-size: 12px;
       font-weight: 600;
@@ -90,15 +77,13 @@
       border-radius: 999px;
       border: 2px solid #001059;
       font-size: 13px;
-      outline: none;
       background: #f9fafb;
-      transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
     }
 
     select:focus, input[type="text"]:focus {
       border-color: #48ef6c;
-      background: #ffffff;
-      box-shadow: 0 0 0 2px rgba(72,239,108,0.25);
+      background: #fff;
+      box-shadow: 0 0 0 2px rgba(72, 239, 108, .25);
     }
 
     .section-card {
@@ -106,26 +91,10 @@
       background: #f9fafb;
       border-radius: 12px;
       border: 1px solid #e5e7eb;
-      padding: 10px 10px 6px;
-      box-shadow: 0 1px 3px rgba(15,23,42,0.08);
+      padding: 10px;
     }
 
-    .section-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 6px;
-    }
-
-    .section-header-title {
-      font-size: 13px;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .section-count { font-size: 11px; color: #6b7280; }
+    .list-postos { max-height: 220px; overflow-y: auto; }
 
     .badge {
       display: inline-block;
@@ -133,25 +102,12 @@
       border-radius: 999px;
       font-size: 10px;
       font-weight: 700;
-      letter-spacing: 0.03em;
-      text-transform: uppercase;
     }
 
-    .badge-abaixo { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
-    .badge-media { background: #dbeafe; color: #1d4ed8; border: 1px solid #bfdbfe; }
-    .badge-acima { background: #fef9c3; color: #854d0e; border: 1px solid #facc15; }
-    .badge-muito { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
-
-    .lista-postos {
-      max-height: 220px;
-      overflow-y: auto;
-      padding-right: 4px;
-    }
-
-    .posto-item { padding: 6px 2px; border-bottom: 1px dashed #e5e7eb; font-size: 12px; }
-    .posto-item:last-child { border-bottom: none; }
-    .posto-nome { font-weight: 600; color: #111827; }
-    .posto-det { font-size: 11px; color: #6b7280; }
+    .badge-abaixo { background: #dcfce7; color: #166534; }
+    .badge-media { background: #dbeafe; color: #1d4ed8; }
+    .badge-acima { background: #fef9c3; color: #854d0e; }
+    .badge-muito { background: #fee2e2; color: #b91c1c; }
 
     table {
       width: 100%;
@@ -159,101 +115,110 @@
       font-size: 11px;
       margin-top: 6px;
     }
-    table thead { background: #001059; color: #f9fafb; }
-    th, td { padding: 6px 4px; border: 1px solid #e5e7eb; text-align:left; }
+
+    table thead {
+      background: #001059;
+      color: #fff;
+    }
+
+    th, td {
+      padding: 6px 4px;
+      border: 1px solid #e5e7eb;
+      text-align: left;
+    }
 
     .map-panel {
       flex: 1;
       padding: 16px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
     }
 
-    .map-card {
+    #map {
       flex: 1;
-      background: #ffffff;
-      border-radius: 16px;
-      border: 1px solid #e5e7eb;
-      box-shadow: 0 2px 8px rgba(15,23,42,0.1);
-      padding: 10px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
+      border-radius: 12px;
+      overflow: hidden;
     }
-
-    #map { flex: 1; border-radius: 12px; overflow: hidden; }
 
     .loader {
       position: fixed;
       top: 50%; left: 50%;
-      transform: translate(-50%,-50%);
+      transform: translate(-50%, -50%);
       border: 5px solid #e5e7eb;
       border-top: 5px solid #48ef6c;
       border-radius: 50%;
       width: 34px; height: 34px;
       animation: spin 1s linear infinite;
       display: none;
-      z-index: 999;
     }
 
-    @keyframes spin { 0%{transform:translate(-50%,-50%) rotate(0deg);} 100%{transform:translate(-50%,-50%) rotate(360deg);} }
+    @keyframes spin {
+      0% { transform: translate(-50%, -50%) rotate(0deg); }
+      100% { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+
   </style>
 </head>
 
 <body>
-  <div class="loader" id="loader"></div>
+  <div id="loader" class="loader"></div>
 
+  <!-- SIDEBAR -->
   <aside class="sidebar">
     <div class="sidebar-logo">
-      <img src="Imagem1.png" alt="Alloha Fibra">
+      <img src="Imagem1.png" alt="Logo" />
     </div>
 
     <div>
       <div class="sidebar-title-main">Painel de Postos</div>
       <div class="sidebar-title-sub">Desvio de Preço & Classificação</div>
-      <div id="contadorBlacklist" class="sidebar-info">
-        Carregando...
-      </div>
+
       <span class="tag">Alloha Frotas · Uso interno</span>
     </div>
+
+    <div id="contadorBlacklist" style="margin-top:10px; font-size:12px;"></div>
   </aside>
 
+  <!-- PAINEL CENTRAL -->
   <main class="main-panel">
 
-    <section>
-      <h2>Filtros</h2>
-      <small>Filtre por UF, Cidade, Nome, Endereço e Mercadoria.</small>
+    <h2>Filtros</h2>
+    <small>Filtre por UF, Cidade, Nome, Endereço e Mercadoria.</small>
 
-      <div class="filtros">
+    <div class="filtros">
 
-        <div>
-          <label for="filtroUF">UF</label>
-          <select id="filtroUF"><option value="">Todas</option></select>
-        </div>
-
-        <div>
-          <label for="filtroCidade">Cidade</label>
-          <select id="filtroCidade"><option value="">Todas</option></select>
-        </div>
-
-        <div>
-          <label for="filtroComb">Mercadoria</label>
-          <select id="filtroComb"><option value="">Todos</option></select>
-        </div>
-
-        <div>
-          <label for="filtroNome">Nome do posto</label>
-          <input type="text" id="filtroNome" placeholder="Digite parte do nome">
-        </div>
-
-        <div>
-          <label for="filtroEndereco">Endereço</label>
-          <input type="text" id="filtroEndereco" placeholder="Digite parte do endereço">
-        </div>
-
+      <div>
+        <label for="filtroUF">UF</label>
+        <select id="filtroUF">
+          <option value="">Todas</option>
+        </select>
       </div>
-    </section>
+
+      <div>
+        <label for="filtroCidade">Cidade</label>
+        <select id="filtroCidade">
+          <option value="">Todas</option>
+        </select>
+      </div>
+
+      <div>
+        <label for="filtroComb">Mercadoria</label>
+        <select id="filtroComb">
+          <option value="">Todas</option>
+        </select>
+      </div>
+
+      <div>
+        <label for="filtroNome">Nome do posto</label>
+        <input id="filtroNome" type="text" placeholder="Digite parte do nome" />
+      </div>
+
+      <div>
+        <label for="filtroEndereco">Endereço</label>
+        <input id="filtroEndereco" type="text" placeholder="Digite parte do endereço" />
+      </div>
+
+    </div>
     <!-- LISTA ABAIXO / MÉDIA -->
     <section class="section-card">
       <div class="section-header">
@@ -277,6 +242,7 @@
         </div>
         <div id="countTabela" class="section-count">(0)</div>
       </div>
+
       <table>
         <thead>
           <tr>
@@ -301,6 +267,7 @@
         <div>Mapa – Postos abaixo da média</div>
         <span>Somente postos abaixo da média aparecem no mapa.</span>
       </div>
+
       <div id="map"></div>
     </div>
   </section>
@@ -328,14 +295,14 @@
       if (!v) return null;
       let s = String(v).replace(/[R$\s]/g, "");
       if (s.includes(",") && !s.includes(".")) s = s.replace(",", ".");
-      return isNaN(parseFloat(s)) ? null : parseFloat(s);
+      return parseFloat(s);
     }
 
     function parseDesvio(v) {
       if (!v) return null;
       let s = String(v).replace("%", "");
       if (s.includes(",") && !s.includes(".")) s = s.replace(",", ".");
-      return isNaN(parseFloat(s)) ? null : parseFloat(s);
+      return parseFloat(s);
     }
 
     function fmt2(n) {
@@ -364,27 +331,31 @@
           const uf = getCol(row, "UF EC");
           const cidade = getCol(row, "Cidade EC");
           const endereco = getCol(row, "Logradouro EC");
-          const mercadoria = getCol(row, "Combustível");
+          const mercadoria = getCol(row, "Mercadoria");
+
+          const precoBruto = getCol(row, "Preço por Litro");
+          const desvioBruto = getCol(row, "Desvio de Preço (%)");
           const blacklist = getCol(row, "Blacklist");
 
-          if (!nome || !uf || !cidade || !endereco || !mercadoria) return null;
+          if (!nome || !uf || !cidade || !endereco) return null;
 
           return {
             nome: nome.trim(),
             uf: uf.trim(),
             cidade: cidade.trim(),
             endereco: endereco.trim(),
-            combustivel: mercadoria.trim(),
-            desvioNum: parseDesvio(getCol(row, "Desvio de Preço (%)")),
-            precoNum: parsePreco(getCol(row, "Preço por Litro")),
+            mercadoria: mercadoria ? mercadoria.trim() : "",
+            precoNum: parsePreco(precoBruto),
+            desvioNum: parseDesvio(desvioBruto),
             status: classificarStatus(blacklist),
-            blacklist: blacklist
+            blacklist
           };
         }).filter(x => x);
 
         inicializarMapa();
         inicializarFiltros();
         atualizarContadorBlacklist();
+
         atualizarInterface().then(() => showLoader(false));
       }
     });
@@ -394,9 +365,9 @@
     function inicializarFiltros() {
       const ufSelect = document.getElementById("filtroUF");
       const cidadeSelect = document.getElementById("filtroCidade");
+      const mercSelect = document.getElementById("filtroComb");
       const nomeInput = document.getElementById("filtroNome");
       const endInput = document.getElementById("filtroEndereco");
-      const mercaSelect = document.getElementById("filtroComb");
 
       const ufs = [...new Set(postos.map(p => p.uf))].sort();
       ufs.forEach(uf => {
@@ -406,19 +377,23 @@
         ufSelect.appendChild(opt);
       });
 
-      const marcadoria = [...new Set(postos.map(p => p.mercadoria))].sort();
-      combustiveis.forEach(c => {
+      const mercadorias = [...new Set(
+        postos.map(p => p.mercadoria.trim()).filter(v => v)
+      )].sort();
+
+      mercadorias.forEach(m => {
         const opt = document.createElement("option");
-        opt.value = c;
-        opt.textContent = c;
-        combSelect.appendChild(opt);
+        opt.value = m;
+        opt.textContent = m;
+        mercSelect.appendChild(opt);
       });
 
       ufSelect.addEventListener("change", () => { preencherCidades(); atualizarInterface(); });
       cidadeSelect.addEventListener("change", atualizarInterface);
+      mercSelect.addEventListener("change", atualizarInterface);
+
       nomeInput.addEventListener("input", atualizarInterface);
       endInput.addEventListener("input", atualizarInterface);
-      combSelect.addEventListener("change", atualizarInterface);
 
       preencherCidades();
     }
@@ -428,11 +403,14 @@
       const cidadeSelect = document.getElementById("filtroCidade");
       cidadeSelect.innerHTML = '<option value="">Todas</option>';
 
-      const cidades = [...new Set(postos.filter(p => !uf || p.uf === uf).map(p => p.cidade))].sort();
-      cidades.forEach(cidade => {
+      const cidades = [...new Set(
+        postos.filter(p => !uf || p.uf === uf).map(p => p.cidade)
+      )].sort();
+
+      cidades.forEach(c => {
         const opt = document.createElement("option");
-        opt.value = cidade;
-        opt.textContent = cidade;
+        opt.value = c;
+        opt.textContent = c;
         cidadeSelect.appendChild(opt);
       });
     }
@@ -440,14 +418,14 @@
     function filtrarPostos() {
       const uf = document.getElementById("filtroUF").value;
       const cidade = document.getElementById("filtroCidade").value;
+      const merc = document.getElementById("filtroComb").value;
       const nome = document.getElementById("filtroNome").value.toLowerCase();
       const endereco = document.getElementById("filtroEndereco").value.toLowerCase();
-      const merca = document.getElementById("filtroComb").value;
 
       return postos.filter(p =>
         (!uf || p.uf === uf) &&
         (!cidade || p.cidade === cidade) &&
-        (!merca || p.mercadoria === merca) &&
+        (!merc || p.mercadoria === merc) &&
         (!nome || p.nome.toLowerCase().includes(nome)) &&
         (!endereco || p.endereco.toLowerCase().includes(endereco))
       );
@@ -480,30 +458,32 @@
       const chave = `${posto.endereco}, ${posto.cidade} - ${posto.uf}`;
       if (geocodeCache[chave]) return geocodeCache[chave];
 
-      const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(chave)}`;
-
       try {
-        const resp = await fetch(url);
+        const resp = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(chave)}`
+        );
         const data = await resp.json();
+
         if (data.length > 0) {
           const lat = parseFloat(data[0].lat);
           const lon = parseFloat(data[0].lon);
           geocodeCache[chave] = { lat, lon };
           return geocodeCache[chave];
         }
-      } catch(e){}
+      } catch (e) {}
 
       return null;
     }
 
     async function atualizarMapa(lista) {
       markersLayer.clearLayers();
+
       const abaixo = lista.filter(p => p.status === "abaixo");
       if (abaixo.length === 0) return;
 
       const bounds = [];
 
-      for (const posto of abaixo.slice(0,80)) {
+      for (const posto of abaixo.slice(0, 80)) {
         const coord = await geocodeEndereco(posto);
         if (!coord) continue;
 
@@ -519,7 +499,7 @@
           <strong>${posto.nome}</strong><br>
           ${posto.endereco}<br>
           ${posto.cidade} - ${posto.uf}<br>
-          Combustível: ${posto.combustivel}<br>
+          Mercadoria: ${posto.mercadoria}<br>
           Desvio: ${fmt2(posto.desvioNum)}%<br>
           Preço: R$ ${fmt2(posto.precoNum)}
         `);
@@ -527,7 +507,8 @@
         bounds.push([coord.lat, coord.lon]);
       }
 
-      if (bounds.length > 0) map.fitBounds(bounds, { padding: [30,30] });
+      if (bounds.length > 0)
+        map.fitBounds(bounds, { padding: [30, 30] });
     }
 
     // =============== LISTA =======================
@@ -535,8 +516,8 @@
       const container = document.getElementById("listaPostos");
       container.innerHTML = "";
 
-      const filtrados = lista.filter(p =>
-        p.status === "abaixo" || p.status === "media"
+      const filtrados = lista.filter(
+        p => p.status === "abaixo" || p.status === "media"
       );
 
       document.getElementById("countLista").textContent = `(${filtrados.length})`;
@@ -549,7 +530,7 @@
           <div class="posto-nome">${p.nome}</div>
           <div class="posto-det">${p.endereco}</div>
           <div class="posto-det">${p.cidade} / ${p.uf}</div>
-          <div class="posto-det">Combustível: ${p.combustivel}</div>
+          <div class="posto-det">Mercadoria: ${p.mercadoria}</div>
           <div class="posto-det">Desvio: ${fmt2(p.desvioNum)}%</div>
           <div class="posto-det">Preço: R$ ${fmt2(p.precoNum)}</div>
         `;
@@ -569,7 +550,7 @@
 
       document.getElementById("countTabela").textContent = `(${filtrados.length})`;
 
-      filtrados.sort((a,b)=>(b.desvioNum||0)-(a.desvioNum||0));
+      filtrados.sort((a, b) => (b.desvioNum || 0) - (a.desvioNum || 0));
 
       filtrados.forEach(p => {
         const tr = document.createElement("tr");
@@ -579,8 +560,8 @@
           <td>${p.cidade}/${p.uf}</td>
           <td>${fmt2(p.desvioNum)}%</td>
           <td>${p.precoNum ? "R$ " + fmt2(p.precoNum) : ""}</td>
-          <td>${p.combustivel}</td>
-          <td>${p.status.replace("_"," ")}</td>
+          <td>${p.mercadoria}</td>
+          <td>${p.status.replace("_", " ")}</td>
         `;
 
         tbody.appendChild(tr);
@@ -592,6 +573,7 @@
       showLoader(true);
 
       const filtrados = filtrarPostos();
+
       atualizarLista(filtrados);
       atualizarTabela(filtrados);
       await atualizarMapa(filtrados);
@@ -603,4 +585,3 @@
 
 </body>
 </html>
-
