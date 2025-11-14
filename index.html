@@ -1,29 +1,25 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <title>Painel de Postos - Alloha Fibra</title>
+  <meta charset="UTF-8" />
+  <title>Painel de Postos - Alloha Fibra</title>
 
-  <!-- Leaflet -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-  <!-- SheetJS para XLSX -->
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-
-  <style>
-    body{margin:0;display:flex;height:100vh;font-family:Arial}
-    .sidebar{width:240px;background:#001059;color:white;padding:15px}
-    .main-panel{width:420px;background:white;padding:10px;border-right:3px solid #001059;overflow-y:auto}
-    .map-panel{flex:1;padding:10px}
-    #map{flex:1;border:2px solid #001059;border-radius:12px;height:100%}
-    .loader{position:fixed;top:50%;left:50%;width:32px;height:32px;border-radius:50%;border:4px solid #ccc;border-top-color:#48ef6c;animation:spin 1s infinite linear;display:none;z-index:999}
-    @keyframes spin{to{transform:translate(-50%,-50%) rotate(360deg)}}
-    .posto-item:hover{background:#eef}
-    table{width:100%;border-collapse:collapse;font-size:13px}
-    th{background:#001059;color:white;padding:5px}
-    td{border:1px solid #ddd;padding:5px}
-  </style>
+    <style>
+    body{margin:0;display:flex;height:100vh;font-family:Arial}
+    .sidebar{width:240px;background:#001059;color:white;padding:15px}
+    .main-panel{width:420px;background:white;padding:10px;border-right:3px solid #001059;overflow-y:auto}
+    .map-panel{flex:1;padding:10px}
+    #map{flex:1;border:2px solid #001059;border-radius:12px;height:100%}
+    .loader{position:fixed;top:50%;left:50%;width:32px;height:32px;border-radius:50%;border:4px solid #ccc;border-top-color:#48ef6c;animation:spin 1s infinite linear;display:none;z-index:999}
+    @keyframes spin{to{transform:translate(-50%,-50%) rotate(360deg)}}
+    .posto-item:hover{background:#eef}
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    th{background:#001059;color:white;padding:5px}
+    td{border:1px solid #ddd;padding:5px}
+  </style>
 </head>
 
 <body>
@@ -31,109 +27,118 @@
 <div class="loader" id="loader"></div>
 
 <aside class="sidebar">
-  <h3>Painel de Postos</h3>
-  <p>Abaixo: <span id="statsAbaixo">0</span></p>
-  <p>Média: <span id="statsMedia">0</span></p>
-  <p>Acima: <span id="statsAcima">0</span></p>
-  <p>Muito acima: <span id="statsMuito">0</span></p>
+  <h3>Painel de Postos</h3>
+  <p>Abaixo: <span id="statsAbaixo">0</span></p>
+  <p>Média: <span id="statsMedia">0</span></p>
+  <p>Acima: <span id="statsAcima">0</span></p>
+  <p>Muito acima: <span id="statsMuito">0</span></p>
 </aside>
 
 <main class="main-panel">
 
-  <h3>Filtros</h3>
+  <h3>Filtros</h3>
 
-  <label>UF</label>
-  <select id="filtroUF"><option value="">Todas</option></select>
+  <label>UF</label>
+  <select id="filtroUF"><option value="">Todas</option></select>
 
-  <label>Cidade</label>
-  <select id="filtroCidade"><option value="">Todas</option></select>
+  <label>Cidade</label>
+  <select id="filtroCidade"><option value="">Todas</option></select>
 
-  <label>Mercadoria</label>
-  <select id="filtroMercadoria"><option value="">Todas</option></select>
+  <label>Mercadoria</label>
+  <select id="filtroMercadoria"><option value="">Todas</option></select>
 
-  <label>Nome</label>
-  <input id="filtroNome"/>
+  <label>Nome</label>
+  <input id="filtroNome"/>
 
-  <label>Endereço</label>
-  <input id="filtroEndereco"/>
+  <label>Endereço</label>
+  <input id="filtroEndereco"/>
 
-  <h3>TOP 10 mais baratos</h3>
-  <div id="listaPostos"></div>
+  <h3>TOP 10 mais baratos</h3>
+  <div id="listaPostos"></div>
 
-  <h3>Postos acima/muito acima</h3>
-  <table>
-    <thead>
-      <tr><th>Posto</th><th>Cidade</th><th>Desvio</th><th>Preço</th><th>Grupo</th></tr>
-    </thead>
-    <tbody id="tabelaAcima"></tbody>
-  </table>
+  <h3>Postos acima/muito acima</h3>
+  <table>
+    <thead>
+      <tr><th>Posto</th><th>Cidade</th><th>Desvio</th><th>Preço</th><th>Grupo</th></tr>
+    </thead>
+    <tbody id="tabelaAcima"></tbody>
+  </table>
 
 </main>
 
 <section class="map-panel">
-  <h3>Mapa</h3>
-  <div id="map"></div>
+  <h3>Mapa</h3>
+  <div id="map"></div>
 </section>
 
 <script>
-const XLSX_FILE = "mapa-postos.xlsx";
+// *** ALTERAÇÃO AQUI: Agora usamos um arquivo JSON ***
+const JSON_FILE = "mapa-postos.json"; 
 let postos = [];
 
 function showLoader(s){document.getElementById("loader").style.display=s?"block":"none";}
 
 function parsePreco(v){
-  if(!v) return null;
-  v = String(v).replace(/[^0-9,.-]/g,"").replace(",",".");
-  const n = parseFloat(v);
-  return isNaN(n) ? null : n;
+  if(!v) return null;
+  // Mantido o tratamento de string para o caso de o JSON ainda ter o preço como texto (ex: "R$ 5,50")
+  v = String(v).replace(/[^0-9,.-]/g,"").replace(",","."); 
+  const n = parseFloat(v);
+  return isNaN(n) ? null : n;
 }
 
 function parseDesvio(v){
-  if(!v) return null;
-  v = String(v).replace(/[^0-9,.-]/g,"").replace(",",".");
-  const n = parseFloat(v);
-  return isNaN(n) ? null : n;
+  if(!v) return null;
+  v = String(v).replace(/[^0-9,.-]/g,"").replace(",",".");
+  const n = parseFloat(v);
+  return isNaN(n) ? null : n;
 }
 
 function classificarStatus(t){
-  if(!t) return "desconhecido";
-  t = t.toLowerCase();
-  if(t.includes("abaixo")) return "abaixo";
-  if(t.includes("dentro")) return "media";
-  if(t.includes("muito")) return "muito_acima";
-  if(t.includes("acima")) return "acima";
-  return "desconhecido";
+  if(!t) return "desconhecido";
+  t = t.toLowerCase();
+  if(t.includes("abaixo")) return "abaixo";
+  if(t.includes("dentro")) return "media";
+  if(t.includes("muito")) return "muito_acima";
+  if(t.includes("acima")) return "acima";
+  return "desconhecido";
 }
 
-(async function carregarXLSX(){
-  showLoader(true);
+// *** FUNÇÃO DE CARREGAMENTO ATUALIZADA PARA JSON ***
+(async function carregarJSON(){
+  showLoader(true);
 
-  const resp = await fetch(XLSX_FILE);
-  const data = await resp.arrayBuffer();
-  const wb = XLSX.read(data);
-  const sheet = wb.Sheets[wb.SheetNames[0]];
-  const rows = XLSX.utils.sheet_to_json(sheet, {defval:""});
+  try {
+    const resp = await fetch(JSON_FILE);
+    if (!resp.ok) {
+      throw new Error(`Erro ao carregar o arquivo ${JSON_FILE}: ${resp.statusText}`);
+    }
+    // Lê o conteúdo como JSON
+    const rows = await resp.json(); 
 
-  postos = rows.map(r=>{
-    // detecta automaticamente QUALQUER nome que contenha "preço"
-    const precoCol = Object.keys(r).find(c => c.toLowerCase().includes("preço"));
-    const desvioCol = Object.keys(r).find(c => c.toLowerCase().includes("desvio"));
+    postos = rows.map(r=>{
+      // detecta automaticamente QUALQUER nome que contenha "preço"
+      const precoCol = Object.keys(r).find(c => c.toLowerCase().includes("preço"));
+      const desvioCol = Object.keys(r).find(c => c.toLowerCase().includes("desvio"));
 
-    return {
-      nome: r["Nome EC"],
-      uf: r["UF EC"],
-      cidade: r["Cidade EC"],
-      endereco: r["Logradouro EC"],
-      mercadoria: r["Mercadoria"],
-      precoNum: parsePreco(r[precoCol]),
-      desvioNum: parseDesvio(r[desvioCol]),
-      blacklist: r["Blacklist"],
-      status: classificarStatus(r["Blacklist"])
-    };
-  });
-
-  inicializarInterface();
-  showLoader(false);
+      return {
+        nome: r["Nome EC"],
+        uf: r["UF EC"],
+        cidade: r["Cidade EC"],
+        endereco: r["Logradouro EC"],
+        mercadoria: r["Mercadoria"],
+        precoNum: parsePreco(r[precoCol]),
+        desvioNum: parseDesvio(r[desvioCol]),
+        blacklist: r["Blacklist"],
+        status: classificarStatus(r["Blacklist"])
+      };
+    });
+  } catch (e) {
+    console.error("Falha ao carregar ou processar os dados:", e);
+    alert("Erro ao carregar os dados. Verifique se 'mapa-postos.json' existe e está no formato correto.");
+  }
+  
+  inicializarInterface();
+  showLoader(false);
 })();
 
 // MAPA
@@ -143,116 +148,116 @@ let markersLayer = L.layerGroup().addTo(map);
 
 // FILTROS
 function inicializarInterface(){
-  inicializarFiltros();
-  atualizarInterface();
+  inicializarFiltros();
+  atualizarInterface();
 }
 
 function inicializarFiltros(){
-  const ufs = [...new Set(postos.map(p=>p.uf))].sort();
-  ufs.forEach(u=>filtroUF.innerHTML+=`<option>${u}</option>`);
+  const ufs = [...new Set(postos.map(p=>p.uf))].sort();
+  ufs.forEach(u=>filtroUF.innerHTML+=`<option>${u}</option>`);
 
-  const mercs = [...new Set(postos.map(p=>p.mercadoria))].sort();
-  mercs.forEach(m=>m && (filtroMercadoria.innerHTML+=`<option>${m}</option>`));
+  const mercs = [...new Set(postos.map(p=>p.mercadoria))].sort();
+  mercs.forEach(m=>m && (filtroMercadoria.innerHTML+=`<option>${m}</option>`));
 
-  filtroUF.onchange = preencherCidades;
-  filtroCidade.onchange = filtroMercadoria.onchange = atualizarInterface;
-  filtroNome.oninput = filtroEndereco.oninput = atualizarInterface;
+  filtroUF.onchange = preencherCidades;
+  filtroCidade.onchange = filtroMercadoria.onchange = atualizarInterface;
+  filtroNome.oninput = filtroEndereco.oninput = atualizarInterface;
 
-  preencherCidades();
+  preencherCidades();
 }
 
 function preencherCidades(){
-  const uf = filtroUF.value;
-  filtroCidade.innerHTML="<option value=''>Todas</option>";
-  [...new Set(postos.filter(p=>!uf||p.uf===uf).map(p=>p.cidade))]
-    .sort()
-    .forEach(c=>filtroCidade.innerHTML+=`<option>${c}</option>`);
+  const uf = filtroUF.value;
+  filtroCidade.innerHTML="<option value=''>Todas</option>";
+  [...new Set(postos.filter(p=>!uf||p.uf===uf).map(p=>p.cidade))]
+    .sort()
+    .forEach(c=>filtroCidade.innerHTML+=`<option>${c}</option>`);
 }
 
 function filtrar(){
-  const uf=filtroUF.value, cid=filtroCidade.value, merc=filtroMercadoria.value;
-  const nome=filtroNome.value.toLowerCase(), end=filtroEndereco.value.toLowerCase();
+  const uf=filtroUF.value, cid=filtroCidade.value, merc=filtroMercadoria.value;
+  const nome=filtroNome.value.toLowerCase(), end=filtroEndereco.value.toLowerCase();
 
-  return postos.filter(p =>
-    (!uf||p.uf===uf)&&
-    (!cid||p.cidade===cid)&&
-    (!merc||p.mercadoria===merc)&&
-    (!nome||p.nome.toLowerCase().includes(nome))&&
-    (!end||p.endereco.toLowerCase().includes(end))
-  );
+  return postos.filter(p =>
+    (!uf||p.uf===uf)&&
+    (!cid||p.cidade===cid)&&
+    (!merc||p.mercadoria===merc)&&
+    (!nome||p.nome.toLowerCase().includes(nome))&&
+    (!end||p.endereco.toLowerCase().includes(end))
+  );
 }
 
 function atualizarInterface(){
-  const list = filtrar();
-  atualizarStats(list);
-  atualizarLista(list);
-  atualizarTabela(list);
-  atualizarMapa(list);
+  const list = filtrar();
+  atualizarStats(list);
+  atualizarLista(list);
+  atualizarTabela(list);
+  atualizarMapa(list);
 }
 
 function atualizarStats(l){
-  statsAbaixo.textContent = l.filter(p=>p.status==="abaixo").length;
-  statsMedia.textContent = l.filter(p=>p.status==="media").length;
-  statsAcima.textContent = l.filter(p=>p.status==="acima").length;
-  statsMuito.textContent = l.filter(p=>p.status==="muito_acima").length;
+  statsAbaixo.textContent = l.filter(p=>p.status==="abaixo").length;
+  statsMedia.textContent = l.filter(p=>p.status==="media").length;
+  statsAcima.textContent = l.filter(p=>p.status==="acima").length;
+  statsMuito.textContent = l.filter(p=>p.status==="muito_acima").length;
 }
 
 function atualizarLista(l){
-  listaPostos.innerHTML="";
-  const top = l
-    .filter(p=>["abaixo","media"].includes(p.status))
-    .sort((a,b)=>a.precoNum-b.precoNum)
-    .slice(0,10);
+  listaPostos.innerHTML="";
+  const top = l
+    .filter(p=>["abaixo","media"].includes(p.status))
+    .sort((a,b)=>a.precoNum-b.precoNum)
+    .slice(0,10);
 
-  top.forEach(p=>{
-    listaPostos.innerHTML+=`
-      <div class='posto-item'>
-        <strong>${p.nome}</strong><br>
-        ${p.cidade} - ${p.uf}<br>
-        R$ ${p.precoNum?.toFixed(2)} • ${p.desvioNum?.toFixed(2)}%
-      </div>
-    `;
-  });
+  top.forEach(p=>{
+    listaPostos.innerHTML+=`
+      <div class='posto-item'>
+        <strong>${p.nome}</strong><br>
+        ${p.cidade} - ${p.uf}<br>
+        R$ ${p.precoNum?.toFixed(2)} • ${p.desvioNum?.toFixed(2)}%
+      </div>
+    `;
+  });
 }
 
 function atualizarTabela(l){
-  tabelaAcima.innerHTML="";
-  const crit = l.filter(p=>p.status==="acima"||p.status==="muito_acima")
-                .sort((a,b)=>b.desvioNum-a.desvioNum);
-  crit.forEach(p=>{
-    tabelaAcima.innerHTML+=`
-      <tr>
-        <td>${p.nome}</td>
-        <td>${p.cidade}</td>
-        <td>${p.desvioNum?.toFixed(2)}%</td>
-        <td>R$ ${p.precoNum?.toFixed(2)}</td>
-        <td>${p.status}</td>
-      </tr>`;
-  });
+  tabelaAcima.innerHTML="";
+  const crit = l.filter(p=>p.status==="acima"||p.status==="muito_acima")
+                .sort((a,b)=>b.desvioNum-a.desvioNum);
+  crit.forEach(p=>{
+    tabelaAcima.innerHTML+=`
+      <tr>
+        <td>${p.nome}</td>
+        <td>${p.cidade}</td>
+        <td>${p.desvioNum?.toFixed(2)}%</td>
+        <td>R$ ${p.precoNum?.toFixed(2)}</td>
+        <td>${p.status}</td>
+      </tr>`;
+  });
 }
 
 async function atualizarMapa(l){
-  markersLayer.clearLayers();
-  const top = l.filter(p=>["abaixo","media"].includes(p.status))
-               .sort((a,b)=>a.precoNum-b.precoNum)
-               .slice(0,10);
+  markersLayer.clearLayers();
+  const top = l.filter(p=>["abaixo","media"].includes(p.status))
+               .sort((a,b)=>a.precoNum-b.precoNum)
+               .slice(0,10);
 
-  for(const p of top){
-    const q = `${p.endereco}, ${p.cidade} - ${p.uf}`;
-    const url=`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=1`;
-    const resp=await fetch(url);
-    const data=await resp.json();
-    if(!data.length) continue;
+  for(const p of top){
+    const q = `${p.endereco}, ${p.cidade} - ${p.uf}`;
+    const url=`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=1`;
+    const resp=await fetch(url);
+    const data=await resp.json();
+    if(!data.length) continue;
 
-    const lat=data[0].lat, lon=data[0].lon;
+    const lat=data[0].lat, lon=data[0].lon;
 
-    L.circleMarker([lat,lon],{
-      radius:6,fillColor:"#22c55e",color:"#14532d",
-      fillOpacity:0.9,weight:2
-    })
-    .bindPopup(`<strong>${p.nome}</strong><br>R$ ${p.precoNum?.toFixed(2)}`)
-    .addTo(markersLayer);
-  }
+    L.circleMarker([lat,lon],{
+      radius:6,fillColor:"#22c55e",color:"#14532d",
+      fillOpacity:0.9,weight:2
+    })
+    .bindPopup(`<strong>${p.nome}</strong><br>R$ ${p.precoNum?.toFixed(2)}`)
+    .addTo(markersLayer);
+  }
 }
 </script>
 
