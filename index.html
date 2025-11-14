@@ -400,7 +400,6 @@
       markersLayer = L.layerGroup().addTo(map);
     }
 
-    // Cache de coordenadas
     const geocodeCache = {};
 
     async function atualizarMapa(lista) {
@@ -413,9 +412,6 @@
 
       for (const p of abaixo) {
 
-        /* ----------------------------
-           ALTERAÇÃO 1 — Leitura Cidade + UF
-        -----------------------------*/
         const q = `${p.endereco}, ${p.cidade}, ${p.uf}, Brasil`;
 
         if (!geocodeCache[q]) {
@@ -451,11 +447,30 @@
         p._marker = m;
       }
 
-      /* ----------------------------
-         ALTERAÇÃO 2 — Zoom automático
-      -----------------------------*/
-      if (markersLayer.getLayers().length > 0) {
-        map.fitBounds(markersLayer.getBounds(), { padding: [30, 30] });
+      // 🔥 ZOOM BASEADO NOS FILTROS (UF / CIDADE)
+      const uf = document.getElementById("filtroUF").value;
+      const cidade = document.getElementById("filtroCidade").value;
+
+      if (cidade) {
+        const coords = abaixo
+          .map(p => geocodeCache[`${p.endereco}, ${p.cidade}, ${p.uf}, Brasil`])
+          .filter(c => c);
+
+        if (coords.length > 0) {
+          map.fitBounds(coords.map(c => [c[0], c[1]]), { padding: [25, 25] });
+        }
+
+      } else if (uf) {
+        const coords = abaixo
+          .map(p => geocodeCache[`${p.endereco}, ${p.cidade}, ${p.uf}, Brasil`])
+          .filter(c => c);
+
+        if (coords.length > 0) {
+          map.fitBounds(coords.map(c => [c[0], c[1]]), { padding: [25, 25] });
+        }
+
+      } else {
+        map.setView([-14.5, -51.5], 4);
       }
     }
 
