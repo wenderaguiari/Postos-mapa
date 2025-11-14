@@ -11,8 +11,8 @@
   />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-  <!-- PapaParse (Leitura CSV) -->
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <!-- SheetJS (leitura XLSX) -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
   <style>
     * {
@@ -25,81 +25,47 @@
       background: #f3f6fb;
       color: #001059;
       display: flex;
-      flex-direction: column;
+      flex-direction: row;
       height: 100vh;
       overflow: hidden;
+      padding-top: 48px; /* espaço pros contadores */
     }
 
-    /* Barra de resumo no topo */
-    .summary-bar {
-      width: 100%;
-      padding: 6px 18px;
+    /* Barra superior de contadores */
+    .top-summary {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 42px;
       background: #ffffff;
-      border-bottom: 1px solid #e5e7eb;
       display: flex;
-      gap: 8px;
       align-items: center;
-      overflow-x: auto;
-      white-space: nowrap;
-      z-index: 20;
+      gap: 10px;
+      padding: 6px 16px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+      z-index: 30;
+      font-size: 12px;
+      color: #111827;
     }
 
-    .chip {
+    .top-pill {
       display: inline-flex;
       align-items: center;
       gap: 4px;
       padding: 4px 10px;
       border-radius: 999px;
-      font-size: 12px;
-      border: 1px solid #d1d5db;
-      background: #f9fafb;
-      color: #111827;
+      background: #f3f4ff;
+      border: 1px solid #e5e7eb;
+      white-space: nowrap;
     }
 
-    .chip strong {
-      font-weight: 600;
+    .top-pill span.num {
+      font-weight: 700;
       color: #001059;
     }
 
-    .chip-main {
-      background: #001059;
-      color: #f9fafb;
-      border-color: #001059;
-    }
-
-    .chip-abaixo {
-      border-color: #22c55e;
-      background: #dcfce7;
-      color: #166534;
-    }
-
-    .chip-media {
-      border-color: #60a5fa;
-      background: #dbeafe;
-      color: #1d4ed8;
-    }
-
-    .chip-acima {
-      border-color: #facc15;
-      background: #fef9c3;
-      color: #854d0e;
-    }
-
-    .chip-muito {
-      border-color: #fecaca;
-      background: #fee2e2;
-      color: #b91c1c;
-    }
-
     /* Layout principal */
-    .layout {
-      flex: 1;
-      display: flex;
-      height: calc(100vh - 40px);
-      /* 40px aprox. da barra de resumo */
-    }
-
-    /* Sidebar com logo e título */
     .sidebar {
       width: 260px;
       background: #001059;
@@ -401,7 +367,7 @@
 
     /* Responsivo */
     @media (max-width: 960px) {
-      .layout {
+      body {
         flex-direction: column;
         height: auto;
       }
@@ -427,155 +393,156 @@
 <body>
   <div class="loader" id="loader"></div>
 
-  <!-- Barra de resumo -->
-  <div class="summary-bar">
-    <div class="chip chip-main">
-      <strong id="chipTotal">0</strong>
+  <!-- Barra superior de contadores -->
+  <div class="top-summary">
+    <div class="top-pill">
+      <span class="num" id="pillTotal">0</span>
       <span>postos filtrados</span>
     </div>
-    <div class="chip" id="chipBloqueados">
-      <strong>Bloqueados:</strong>
-      <span>0</span>
+    <div class="top-pill">
+      <span class="num" id="pillBloqueados">0</span>
+      <span>Bloqueados</span>
     </div>
-    <div class="chip chip-abaixo" id="chipAbaixo">
-      <strong>Abaixo:</strong>
-      <span>0</span>
+    <div class="top-pill">
+      <span class="num" id="pillAbaixo">0</span>
+      <span>Abaixo</span>
     </div>
-    <div class="chip chip-media" id="chipMedia">
-      <strong>Na média:</strong>
-      <span>0</span>
+    <div class="top-pill">
+      <span class="num" id="pillMedia">0</span>
+      <span>Na média</span>
     </div>
-    <div class="chip chip-acima" id="chipAcima">
-      <strong>Acima:</strong>
-      <span>0</span>
+    <div class="top-pill">
+      <span class="num" id="pillAcima">0</span>
+      <span>Acima</span>
     </div>
-    <div class="chip chip-muito" id="chipMuito">
-      <strong>Muito acima:</strong>
-      <span>0</span>
+    <div class="top-pill">
+      <span class="num" id="pillMuito">0</span>
+      <span>Muito acima</span>
     </div>
   </div>
 
-  <div class="layout">
-    <!-- Sidebar -->
-    <aside class="sidebar">
-      <div class="sidebar-logo">
-        <!-- Logo branca -->
-        <img src="Imagem1.png" alt="Alloha Fibra" />
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <!-- Logo branca -->
+      <img src="Imagem1.png" alt="Alloha Fibra" />
+    </div>
+    <div>
+      <div class="sidebar-title-main">Painel de Postos</div>
+      <div class="sidebar-title-sub">Desvio de Preço &amp; Classificação</div>
+      <div class="sidebar-info">
+        Foco em <strong>postos abaixo da média</strong> no mapa e visão
+        geral dos <strong>demais grupos</strong> em listas e tabela.
       </div>
-      <div>
-        <div class="sidebar-title-main">Painel de Postos</div>
-        <div class="sidebar-title-sub">Desvio de Preço & Classificação</div>
-        <div class="sidebar-info">
-          Foco em <strong>postos abaixo da média</strong> no mapa e visão
-          geral dos <strong>demais grupos</strong> em listas e tabela.
+      <span class="tag">Alloha Frotas · Uso interno</span>
+    </div>
+  </aside>
+
+  <!-- Painel central (filtros + listas + tabela) -->
+  <main class="main-panel">
+    <section>
+      <h2>Filtros</h2>
+      <small>Use os filtros para localizar rapidamente os postos por UF, cidade, combustível, nome ou endereço.</small>
+
+      <div class="filtros">
+        <div>
+          <label for="filtroUF">UF</label>
+          <select id="filtroUF">
+            <option value="">Todas</option>
+          </select>
         </div>
-        <span class="tag">Alloha Frotas · Uso interno</span>
-      </div>
-    </aside>
 
-    <!-- Painel central (filtros + listas + tabela) -->
-    <main class="main-panel">
-      <section>
-        <h2>Filtros</h2>
-        <small>Use os filtros para localizar rapidamente os postos por UF, cidade, combustível, nome ou endereço.</small>
-
-        <div class="filtros">
-          <div>
-            <label for="filtroUF">UF</label>
-            <select id="filtroUF">
-              <option value="">Todas</option>
-            </select>
-          </div>
-
-          <div>
-            <label for="filtroCidade">Cidade</label>
-            <select id="filtroCidade">
-              <option value="">Todas</option>
-            </select>
-          </div>
-
-          <div>
-            <label for="filtroCombustivel">Tipo de Combustível</label>
-            <select id="filtroCombustivel">
-              <option value="">Todos</option>
-            </select>
-          </div>
-
-          <div>
-            <label for="filtroNome">Nome do posto</label>
-            <input type="text" id="filtroNome" placeholder="Digite parte do nome" />
-          </div>
-
-          <div>
-            <label for="filtroEndereco">Endereço</label>
-            <input
-              type="text"
-              id="filtroEndereco"
-              placeholder="Digite parte do logradouro"
-            />
-          </div>
+        <div>
+          <label for="filtroCidade">Cidade</label>
+          <select id="filtroCidade">
+            <option value="">Todas</option>
+          </select>
         </div>
-      </section>
 
-      <!-- Lista: abaixo + na média -->
-      <section class="section-card">
-        <div class="section-header">
-          <div class="section-header-title">
-            <span class="badge badge-abaixo">Abaixo</span>
-            <span class="badge badge-media">Na média</span>
-            Postos em situação aceitável ou melhor
-          </div>
-          <div class="section-count" id="countLista">(0)</div>
+        <div>
+          <label for="filtroCombustivel">Tipo de Combustível</label>
+          <select id="filtroCombustivel">
+            <option value="">Todos</option>
+          </select>
         </div>
-        <div class="lista-postos" id="listaPostos"></div>
-      </section>
 
-      <!-- Tabela: acima + muito acima -->
-      <section class="section-card">
-        <div class="section-header">
-          <div class="section-header-title">
-            <span class="badge badge-acima">Acima</span>
-            <span class="badge badge-muito">Muito acima</span>
-            Postos com desvio crítico
-          </div>
-          <div class="section-count" id="countTabela">(0)</div>
+        <div>
+          <label for="filtroNome">Nome do posto</label>
+          <input type="text" id="filtroNome" placeholder="Digite parte do nome" />
         </div>
-        <table>
-          <thead>
-            <tr>
-              <th>Posto</th>
-              <th>Cidade/UF</th>
-              <th>Comb.</th>
-              <th>Desvio (%)</th>
-              <th>Preço (R$)</th>
-              <th>Grupo</th>
-            </tr>
-          </thead>
-          <tbody id="tabelaAcima"></tbody>
-        </table>
-      </section>
-    </main>
 
-    <!-- Painel de mapa -->
-    <section class="map-panel">
-      <div class="map-card">
-        <div class="map-header">
-          <div>Mapa – Postos abaixo da média</div>
-          <span>O mapa exibe somente os postos classificados como “Abaixo da média”.</span>
-        </div>
-        <div id="map"></div>
-        <div class="hint">
-          Dica: use os filtros para focar em uma região específica. Os marcadores
-          exibem nome, endereço, desvio e preço.
+        <div>
+          <label for="filtroEndereco">Endereço</label>
+          <input
+            type="text"
+            id="filtroEndereco"
+            placeholder="Digite parte do logradouro"
+          />
         </div>
       </div>
     </section>
-  </div>
+
+    <!-- Lista: abaixo + na média -->
+    <section class="section-card">
+      <div class="section-header">
+        <div class="section-header-title">
+          <span class="badge badge-abaixo">Abaixo</span>
+          <span class="badge badge-media">Na média</span>
+          Postos em situação aceitável ou melhor
+        </div>
+        <div class="section-count" id="countLista">(0)</div>
+      </div>
+      <div class="lista-postos" id="listaPostos"></div>
+    </section>
+
+    <!-- Tabela: acima + muito acima -->
+    <section class="section-card">
+      <div class="section-header">
+        <div class="section-header-title">
+          <span class="badge badge-acima">Acima</span>
+          <span class="badge badge-muito">Muito acima</span>
+          Postos com desvio crítico
+        </div>
+        <div class="section-count" id="countTabela">(0)</div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Posto</th>
+            <th>Cidade/UF</th>
+            <th>Comb.</th>
+            <th>Desvio (%)</th>
+            <th>Preço (R$)</th>
+            <th>Grupo</th>
+          </tr>
+        </thead>
+        <tbody id="tabelaAcima"></tbody>
+      </table>
+    </section>
+  </main>
+
+  <!-- Painel de mapa -->
+  <section class="map-panel">
+    <div class="map-card">
+      <div class="map-header">
+        <div>Mapa – Postos abaixo da média</div>
+        <span>O mapa exibe somente os postos classificados como “Abaixo da média”.</span>
+      </div>
+      <div id="map"></div>
+      <div class="hint">
+        Dica: use os filtros para focar em uma região específica. Os marcadores
+        exibem nome, endereço, combustível, desvio e preço.
+      </div>
+    </div>
+  </section>
 
   <script>
     // ============ CONFIG ============
 
-    const CSV_FILE = "postos-mapa.csv";
+    // URL RAW do XLSX no GitHub
+    // Ajuste se seu usuário, repositório, branch ou nome de arquivo forem diferentes.
+    const XLSX_FILE_URL =
+      "https://raw.githubusercontent.com/wenderaguiar/Postos-mapa/main/mapa-postos.xlsx";
 
     const loader = document.getElementById("loader");
     function showLoader(show) {
@@ -584,8 +551,6 @@
 
     let postos = [];
     let map, markersLayer;
-
-    // Cache simples em localStorage para não refazer o geocode sempre
     const geocodeCache =
       JSON.parse(localStorage.getItem("geocodeCachePostosAbaixo")) || {};
 
@@ -596,9 +561,10 @@
       );
     }
 
-    // Helpers
     function getCol(row, name) {
-      const key = Object.keys(row).find((k) => k.trim() === name);
+      const key = Object.keys(row).find(
+        (k) => k.trim().toLowerCase() === name.trim().toLowerCase()
+      );
       return key ? row[key] : "";
     }
 
@@ -632,7 +598,7 @@
     function classificarStatus(blacklist) {
       if (!blacklist) return "desconhecido";
       const s = String(blacklist);
-      if (s.includes("Bloqueado")) return "bloqueado";
+      if (s.includes("Bloqueado") || s.includes("Bloqueio")) return "bloqueado";
       if (s.includes("Abaixo da média")) return "abaixo";
       if (s.includes("Dentro da média")) return "media";
       if (s.includes("Muito acima")) return "muito_acima";
@@ -640,30 +606,50 @@
       return "desconhecido";
     }
 
-    // ============ LEITURA CSV ============
+    // ============ LEITURA XLSX ============
 
-    showLoader(true);
+    async function carregarXLSX() {
+      showLoader(true);
+      try {
+        const resp = await fetch(XLSX_FILE_URL);
+        const arrayBuffer = await resp.arrayBuffer();
+        const workbook = XLSX.read(arrayBuffer, { type: "array" });
 
-    Papa.parse(CSV_FILE, {
-      download: true,
-      header: true,
-      skipEmptyLines: true,
-      complete: function (results) {
-        postos = results.data
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+
+        const data = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+
+        postos = data
           .map((row) => {
-            const nome = getCol(row, "Nome EC");
-            const uf = getCol(row, "UF EC");
-            const cidade = getCol(row, "Cidade EC");
-            const logradouro = getCol(row, "Logradouro EC");
-            const desvioBruto = getCol(row, "Desvio de Preço (%)");
-            const blacklist = getCol(row, "Blacklist");
+            const nome =
+              getCol(row, "Nome EC") || getCol(row, "Nome") || getCol(row, "Posto");
+            const uf =
+              getCol(row, "UF EC") || getCol(row, "UF") || getCol(row, "Estado");
+            const cidade =
+              getCol(row, "Cidade EC") || getCol(row, "Cidade") || "";
+            const logradouro =
+              getCol(row, "Logradouro EC") ||
+              getCol(row, "Logradouro") ||
+              getCol(row, "Endereco") ||
+              getCol(row, "Endereço");
+            const desvioBruto =
+              getCol(row, "Desvio de Preço (%)") ||
+              getCol(row, "Desvio de Preco (%)") ||
+              getCol(row, "Desvio (%)") ||
+              getCol(row, "Desvio");
+            const blacklist = getCol(row, "Blacklist") || getCol(row, "Classificacao");
             const precoBruto =
-              getCol(row, "Preço por Litro") || getCol(row, " Preço por Litro ");
+              getCol(row, "Preço por Litro") ||
+              getCol(row, "Preco por Litro") ||
+              getCol(row, "Preço") ||
+              getCol(row, "Preco");
             const combustivel =
+              getCol(row, "Mercadoria") ||
+              getCol(row, "Produto") ||
               getCol(row, "Tipo de Combustível") ||
-              getCol(row, "Combustivel") ||
               getCol(row, "Combustível") ||
-              "Não informado";
+              getCol(row, "Combustivel");
 
             if (!nome || !uf || !cidade || !logradouro) return null;
 
@@ -674,27 +660,27 @@
               uf: String(uf).trim(),
               cidade: String(cidade).trim(),
               endereco: String(logradouro).trim(),
+              combustivel: String(combustivel || "").trim(),
               blacklist: blacklist,
               status: status,
               desvioNum: parseDesvio(desvioBruto),
               precoNum: parsePreco(precoBruto),
-              combustivel: String(combustivel).trim(),
             };
           })
           .filter((x) => x !== null);
 
         inicializarMapa();
         inicializarFiltros();
-        atualizarInterface().then(() => showLoader(false));
-      },
-      error: function (err) {
-        console.error("Erro ao ler CSV:", err);
+        await atualizarInterface();
+      } catch (e) {
+        console.error("Erro ao carregar XLSX:", e);
         alert(
-          "Erro ao carregar o arquivo 'postos-mapa.csv'. Verifique se o arquivo está na mesma pasta do HTML."
+          "Erro ao carregar o arquivo XLSX do GitHub. Confira a URL em XLSX_FILE_URL e se o repositório/arquivo são públicos."
         );
+      } finally {
         showLoader(false);
-      },
-    });
+      }
+    }
 
     // ============ FILTROS ============
 
@@ -705,7 +691,7 @@
       const nomeInput = document.getElementById("filtroNome");
       const endInput = document.getElementById("filtroEndereco");
 
-      // UF
+      // UFs
       const ufs = Array.from(new Set(postos.map((p) => p.uf))).sort();
       ufs.forEach((uf) => {
         const opt = document.createElement("option");
@@ -714,11 +700,15 @@
         ufSelect.appendChild(opt);
       });
 
-      // Tipo de combustível
-      const combs = Array.from(
-        new Set(postos.map((p) => p.combustivel || "Não informado"))
+      // Combustíveis
+      const combustiveis = Array.from(
+        new Set(
+          postos
+            .map((p) => p.combustivel)
+            .filter((c) => c && c.trim() !== "")
+        )
       ).sort();
-      combs.forEach((c) => {
+      combustiveis.forEach((c) => {
         const opt = document.createElement("option");
         opt.value = c;
         opt.textContent = c;
@@ -761,7 +751,7 @@
     function filtrarPostos() {
       const uf = document.getElementById("filtroUF").value;
       const cidade = document.getElementById("filtroCidade").value;
-      const combustivel = document.getElementById("filtroCombustivel").value;
+      const comb = document.getElementById("filtroCombustivel").value;
       const nome = document.getElementById("filtroNome").value.toLowerCase();
       const endereco = document
         .getElementById("filtroEndereco")
@@ -771,7 +761,7 @@
         return (
           (!uf || p.uf === uf) &&
           (!cidade || p.cidade === cidade) &&
-          (!combustivel || p.combustivel === combustivel) &&
+          (!comb || p.combustivel === comb) &&
           (!nome || p.nome.toLowerCase().includes(nome)) &&
           (!endereco || p.endereco.toLowerCase().includes(endereco))
         );
@@ -822,13 +812,12 @@
     async function atualizarMapa(postosFiltrados) {
       markersLayer.clearLayers();
 
-      // Somente abaixo da média no mapa
       const abaixo = postosFiltrados.filter((p) => p.status === "abaixo");
 
       if (abaixo.length === 0) return;
 
       const bounds = [];
-      // Limita quantidade para não ficar pesado (ex: 80 primeiros)
+      // Limita quantidade para não ficar pesado
       const limitados = abaixo.slice(0, 80);
 
       for (const posto of limitados) {
@@ -839,7 +828,9 @@
         parts.push(`<strong>${posto.nome}</strong>`);
         parts.push(`${posto.endereco}`);
         parts.push(`${posto.cidade} - ${posto.uf}`);
-        parts.push(`Combustível: ${posto.combustivel}`);
+        if (posto.combustivel) {
+          parts.push(`Combustível: ${posto.combustivel}`);
+        }
         if (posto.desvioNum !== null) {
           parts.push(`Desvio: ${fmt2(posto.desvioNum)}%`);
         }
@@ -891,7 +882,9 @@
           `<div class="posto-nome">${p.nome}</div>` +
           `<div class="posto-det">${p.endereco}</div>` +
           `<div class="posto-det">${p.cidade} / ${p.uf}</div>` +
-          `<div class="posto-det">Combustível: ${p.combustivel}</div>` +
+          (p.combustivel
+            ? `<div class="posto-det">Combustível: ${p.combustivel}</div>`
+            : "") +
           (p.desvioNum !== null
             ? `<div class="posto-det">Desvio: ${fmt2(
                 p.desvioNum
@@ -935,7 +928,7 @@
         tr.innerHTML =
           `<td>${p.nome}</td>` +
           `<td>${p.cidade} / ${p.uf}</td>` +
-          `<td>${p.combustivel}</td>` +
+          `<td>${p.combustivel || ""}</td>` +
           `<td>${p.desvioNum !== null ? fmt2(p.desvioNum) + "%" : ""}</td>` +
           `<td>${p.precoNum !== null ? "R$ " + fmt2(p.precoNum) : ""}</td>` +
           `<td>${grupoBadge}</td>`;
@@ -944,29 +937,30 @@
       });
     }
 
-    // ============ RESUMO (chips do topo) ============
+    // ============ CONTADORES SUPERIORES ============
 
-    function atualizarResumo(postosFiltrados) {
-      const chipTotal = document.getElementById("chipTotal");
-      const chipBloq = document.querySelector("#chipBloqueados span");
-      const chipAbaixo = document.querySelector("#chipAbaixo span");
-      const chipMedia = document.querySelector("#chipMedia span");
-      const chipAcima = document.querySelector("#chipAcima span");
-      const chipMuito = document.querySelector("#chipMuito span");
+    function atualizarContadores(postosFiltrados) {
+      const total = postosFiltrados.length;
+      let abaixo = 0,
+        media = 0,
+        acima = 0,
+        muito = 0,
+        bloqueados = 0;
 
-      chipTotal.textContent = postosFiltrados.length;
+      postosFiltrados.forEach((p) => {
+        if (p.status === "bloqueado") bloqueados++;
+        else if (p.status === "abaixo") abaixo++;
+        else if (p.status === "media") media++;
+        else if (p.status === "acima") acima++;
+        else if (p.status === "muito_acima") muito++;
+      });
 
-      const bloq = postosFiltrados.filter((p) => p.status === "bloqueado").length;
-      const abaixo = postosFiltrados.filter((p) => p.status === "abaixo").length;
-      const media = postosFiltrados.filter((p) => p.status === "media").length;
-      const acima = postosFiltrados.filter((p) => p.status === "acima").length;
-      const muito = postosFiltrados.filter((p) => p.status === "muito_acima").length;
-
-      chipBloq.textContent = bloq;
-      chipAbaixo.textContent = abaixo;
-      chipMedia.textContent = media;
-      chipAcima.textContent = acima;
-      chipMuito.textContent = muito;
+      document.getElementById("pillTotal").textContent = total;
+      document.getElementById("pillBloqueados").textContent = bloqueados;
+      document.getElementById("pillAbaixo").textContent = abaixo;
+      document.getElementById("pillMedia").textContent = media;
+      document.getElementById("pillAcima").textContent = acima;
+      document.getElementById("pillMuito").textContent = muito;
     }
 
     // ============ ATUALIZAÇÃO GERAL ============
@@ -974,12 +968,15 @@
     async function atualizarInterface() {
       showLoader(true);
       const filtrados = filtrarPostos();
+      atualizarContadores(filtrados);
       atualizarLista(filtrados);
       atualizarTabela(filtrados);
-      atualizarResumo(filtrados);
       await atualizarMapa(filtrados);
       showLoader(false);
     }
+
+    // Início
+    carregarXLSX();
   </script>
 </body>
 </html>
