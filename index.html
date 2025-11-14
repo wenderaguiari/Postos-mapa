@@ -1,264 +1,380 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <title>Painel de Postos - Alloha Fibra</title>
+  <meta charset="UTF-8" />
+  <title>Painel de Postos - Alloha Fibra</title>
 
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- Leaflet -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-    <style>
-    body{margin:0;display:flex;height:100vh;font-family:Arial}
-    .sidebar{width:240px;background:#001059;color:white;padding:15px}
-    .main-panel{width:420px;background:white;padding:10px;border-right:3px solid #001059;overflow-y:auto}
-    .map-panel{flex:1;padding:10px}
-    #map{flex:1;border:2px solid #001059;border-radius:12px;height:100%}
-    .loader{position:fixed;top:50%;left:50%;width:32px;height:32px;border-radius:50%;border:4px solid #ccc;border-top-color:#48ef6c;animation:spin 1s infinite linear;display:none;z-index:999}
-    @keyframes spin{to{transform:translate(-50%,-50%) rotate(360deg)}}
-    .posto-item:hover{background:#eef}
-    table{width:100%;border-collapse:collapse;font-size:13px}
-    th{background:#001059;color:white;padding:5px}
-    td{border:1px solid #ddd;padding:5px}
-  </style>
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 14px;
+      background: #f3f6fb;
+      color: #001059;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .sidebar {
+      width: 240px;
+      background: #001059;
+      color: #f9fafb;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: 4px 0 10px rgba(0,0,0,0.25);
+    }
+
+    .main-panel {
+      width: 420px;
+      background: #ffffff;
+      padding: 10px 14px;
+      border-right: 2px solid #001059;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      overflow-y: auto;
+    }
+
+    #map {
+      flex: 1;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 2px solid #001059;
+    }
+
+    .loader {
+      position: fixed;
+      top:50%;
+      left:50%;
+      width:32px;
+      height:32px;
+      border-radius:50%;
+      border:4px solid #e5e7eb;
+      border-top:4px solid #48ef6c;
+      transform:translate(-50%,-50%);
+      animation:spin 1s linear infinite;
+      display:none;
+      z-index:999;
+    }
+    @keyframes spin {
+      0% { transform:translate(-50%,-50%) rotate(0deg); }
+      100%{ transform:translate(-50%,-50%) rotate(360deg); }
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    th {
+      background:#001059;
+      color:#f9fafb;
+      padding:5px;
+      font-weight:600;
+      text-align: left;
+    }
+    td {
+      padding:5px 4px;
+      border:1px solid #e5e7eb;
+    }
+    tbody tr:hover {
+      background:#e5ebff;
+      cursor:pointer;
+    }
+
+    .posto-item {
+      padding: 5px 2px;
+      border-bottom: 1px dashed #e5e7eb;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .posto-item:hover { background:#e5ebff; }
+
+    .posto-nome {
+      font-weight: 600;
+      color: #111827;
+    }
+
+    .posto-det {
+      font-size: 12px;
+      color: #6b7280;
+    }
+  </style>
 </head>
 
 <body>
 
 <div class="loader" id="loader"></div>
 
+<!-- SIDEBAR -->
 <aside class="sidebar">
-  <h3>Painel de Postos</h3>
-  <p>Abaixo: <span id="statsAbaixo">0</span></p>
-  <p>Média: <span id="statsMedia">0</span></p>
-  <p>Acima: <span id="statsAcima">0</span></p>
-  <p>Muito acima: <span id="statsMuito">0</span></p>
+  <h2>Painel de Postos</h2>
+  <p>Abaixo: <span id="statsAbaixo">0</span></p>
+  <p>Média: <span id="statsMedia">0</span></p>
+  <p>Acima: <span id="statsAcima">0</span></p>
+  <p>Muito acima: <span id="statsMuito">0</span></p>
 </aside>
 
+<!-- PAINEL CENTRAL -->
 <main class="main-panel">
 
-  <h3>Filtros</h3>
+  <h3>Filtros</h3>
 
-  <label>UF</label>
-  <select id="filtroUF"><option value="">Todas</option></select>
+  <label for="filtroUF">UF</label>
+  <select id="filtroUF">
+    <option value="">Todas</option>
+  </select>
 
-  <label>Cidade</label>
-  <select id="filtroCidade"><option value="">Todas</option></select>
+  <label for="filtroCidade">Cidade</label>
+  <select id="filtroCidade">
+    <option value="">Todas</option>
+  </select>
 
-  <label>Mercadoria</label>
-  <select id="filtroMercadoria"><option value="">Todas</option></select>
+  <label for="filtroMercadoria">Mercadoria</label>
+  <select id="filtroMercadoria">
+    <option value="">Todas</option>
+  </select>
 
-  <label>Nome</label>
-  <input id="filtroNome"/>
+  <label for="filtroNome">Nome do posto</label>
+  <input type="text" id="filtroNome" />
 
-  <label>Endereço</label>
-  <input id="filtroEndereco"/>
+  <label for="filtroEndereco">Endereço</label>
+  <input type="text" id="filtroEndereco" />
 
-  <h3>TOP 10 mais baratos</h3>
-  <div id="listaPostos"></div>
+  <h3>Top 10 mais baratos</h3>
+  <div id="listaPostos"></div>
 
-  <h3>Postos acima/muito acima</h3>
-  <table>
-    <thead>
-      <tr><th>Posto</th><th>Cidade</th><th>Desvio</th><th>Preço</th><th>Grupo</th></tr>
-    </thead>
-    <tbody id="tabelaAcima"></tbody>
-  </table>
+  <h3>Postos acima / muito acima</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Posto</th>
+        <th>Cidade</th>
+        <th>Desvio (%)</th>
+        <th>Preço (R$)</th>
+        <th>Grupo</th>
+      </tr>
+    </thead>
+    <tbody id="tabelaAcima"></tbody>
+  </table>
 
 </main>
 
-<section class="map-panel">
-  <h3>Mapa</h3>
-  <div id="map"></div>
+<!-- MAPA -->
+<section class="map-panel" style="flex:1; padding:10px;">
+  <h3>Mapa – Postos abaixo da média</h3>
+  <div id="map"></div>
 </section>
 
 <script>
-// *** ALTERAÇÃO AQUI: Agora usamos um arquivo JSON ***
-const JSON_FILE = "mapa-postos.json"; 
-let postos = [];
 
-function showLoader(s){document.getElementById("loader").style.display=s?"block":"none";}
+  const JSON_FILE = "mapa-postos.json";
+  let postos = [];
+  let map, markersLayer;
 
-function parsePreco(v){
-  if(!v) return null;
-  // Mantido o tratamento de string para o caso de o JSON ainda ter o preço como texto (ex: "R$ 5,50")
-  v = String(v).replace(/[^0-9,.-]/g,"").replace(",","."); 
-  const n = parseFloat(v);
-  return isNaN(n) ? null : n;
-}
+  function showLoader(show) {
+    document.getElementById("loader").style.display = show ? "block" : "none";
+  }
 
-function parseDesvio(v){
-  if(!v) return null;
-  v = String(v).replace(/[^0-9,.-]/g,"").replace(",",".");
-  const n = parseFloat(v);
-  return isNaN(n) ? null : n;
-}
+  function parsePreco(v){
+    if(!v) return null;
+    return parseFloat(String(v).replace(",", "."));
+  }
 
-function classificarStatus(t){
-  if(!t) return "desconhecido";
-  t = t.toLowerCase();
-  if(t.includes("abaixo")) return "abaixo";
-  if(t.includes("dentro")) return "media";
-  if(t.includes("muito")) return "muito_acima";
-  if(t.includes("acima")) return "acima";
-  return "desconhecido";
-}
+  function parseDesvio(v){
+    if(!v) return null;
+    return parseFloat(String(v).replace(",", "."));
+  }
 
-// *** FUNÇÃO DE CARREGAMENTO ATUALIZADA PARA JSON ***
-(async function carregarJSON(){
-  showLoader(true);
+  function classificarStatus(t){
+    if(!t) return "desconhecido";
+    t = t.toLowerCase();
+    if(t.includes("abaixo")) return "abaixo";
+    if(t.includes("dentro")) return "media";
+    if(t.includes("muito")) return "muito_acima";
+    if(t.includes("acima")) return "acima";
+    return "desconhecido";
+  }
 
-  try {
-    const resp = await fetch(JSON_FILE);
-    if (!resp.ok) {
-      throw new Error(`Erro ao carregar o arquivo ${JSON_FILE}: ${resp.statusText}`);
-    }
-    // Lê o conteúdo como JSON
-    const rows = await resp.json(); 
+  showLoader(true);
 
-    postos = rows.map(r=>{
-      // detecta automaticamente QUALQUER nome que contenha "preço"
-      const precoCol = Object.keys(r).find(c => c.toLowerCase().includes("preço"));
-      const desvioCol = Object.keys(r).find(c => c.toLowerCase().includes("desvio"));
+  fetch(JSON_FILE)
+    .then(r => r.json())
+    .then(data => {
+      postos = data.map(row => {
+        return {
+          nome: row["Nome EC"],
+          uf: row["UF EC"],
+          cidade: row["Cidade EC"],
+          endereco: row["Logradouro EC"],
+          mercadoria: row["Mercadoria"],
+          precoNum: parsePreco(row["Preço por Litro"]),
+          desvioNum: parseDesvio(row["Desvio de Preço (%)"]),
+          blacklist: row["Blacklist"],
+          status: classificarStatus(row["Blacklist"])
+        };
+      });
 
-      return {
-        nome: r["Nome EC"],
-        uf: r["UF EC"],
-        cidade: r["Cidade EC"],
-        endereco: r["Logradouro EC"],
-        mercadoria: r["Mercadoria"],
-        precoNum: parsePreco(r[precoCol]),
-        desvioNum: parseDesvio(r[desvioCol]),
-        blacklist: r["Blacklist"],
-        status: classificarStatus(r["Blacklist"])
-      };
-    });
-  } catch (e) {
-    console.error("Falha ao carregar ou processar os dados:", e);
-    alert("Erro ao carregar os dados. Verifique se 'mapa-postos.json' existe e está no formato correto.");
-  }
-  
-  inicializarInterface();
-  showLoader(false);
-})();
+      inicializarMapa();
+      inicializarFiltros();
+      atualizarInterface();
+      showLoader(false);
+    });
 
-// MAPA
-let map = L.map("map").setView([-14,-52], 4);
-L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
-let markersLayer = L.layerGroup().addTo(map);
+  function inicializarMapa() {
+    map = L.map("map").setView([-14.5, -51.5], 4);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 18
+    }).addTo(map);
 
-// FILTROS
-function inicializarInterface(){
-  inicializarFiltros();
-  atualizarInterface();
-}
+    markersLayer = L.layerGroup().addTo(map);
+  }
 
-function inicializarFiltros(){
-  const ufs = [...new Set(postos.map(p=>p.uf))].sort();
-  ufs.forEach(u=>filtroUF.innerHTML+=`<option>${u}</option>`);
+  function inicializarFiltros() {
+    const ufSel = document.getElementById("filtroUF");
+    const cidadesSel = document.getElementById("filtroCidade");
+    const mercSel = document.getElementById("filtroMercadoria");
 
-  const mercs = [...new Set(postos.map(p=>p.mercadoria))].sort();
-  mercs.forEach(m=>m && (filtroMercadoria.innerHTML+=`<option>${m}</option>`));
+    [...new Set(postos.map(p=>p.uf))].sort()
+      .forEach(uf=>{
+        ufSel.innerHTML += `<option>${uf}</option>`;
+      });
 
-  filtroUF.onchange = preencherCidades;
-  filtroCidade.onchange = filtroMercadoria.onchange = atualizarInterface;
-  filtroNome.oninput = filtroEndereco.oninput = atualizarInterface;
+    [...new Set(postos.map(p=>p.mercadoria))].sort()
+      .forEach(m=>{
+        mercSel.innerHTML += `<option>${m}</option>`;
+      });
 
-  preencherCidades();
-}
+    ufSel.onchange = () => {
+      cidadesSel.innerHTML = "<option value=''>Todas</option>";
+      const uf = ufSel.value;
+      [...new Set(postos.filter(p=>!uf||p.uf===uf).map(p=>p.cidade))]
+        .sort()
+        .forEach(c=>cidadesSel.innerHTML+=`<option>${c}</option>`);
+      atualizarInterface();
+    };
 
-function preencherCidades(){
-  const uf = filtroUF.value;
-  filtroCidade.innerHTML="<option value=''>Todas</option>";
-  [...new Set(postos.filter(p=>!uf||p.uf===uf).map(p=>p.cidade))]
-    .sort()
-    .forEach(c=>filtroCidade.innerHTML+=`<option>${c}</option>`);
-}
+    cidadesSel.onchange =
+      mercSel.onchange =
+      filtroNome.oninput =
+      filtroEndereco.oninput = atualizarInterface;
 
-function filtrar(){
-  const uf=filtroUF.value, cid=filtroCidade.value, merc=filtroMercadoria.value;
-  const nome=filtroNome.value.toLowerCase(), end=filtroEndereco.value.toLowerCase();
+    ufSel.onchange();
+  }
 
-  return postos.filter(p =>
-    (!uf||p.uf===uf)&&
-    (!cid||p.cidade===cid)&&
-    (!merc||p.mercadoria===merc)&&
-    (!nome||p.nome.toLowerCase().includes(nome))&&
-    (!end||p.endereco.toLowerCase().includes(end))
-  );
-}
+  function filtrar() {
+    const uf = filtroUF.value;
+    const cidade = filtroCidade.value;
+    const merc = filtroMercadoria.value;
+    const nome = filtroNome.value.toLowerCase();
+    const end = filtroEndereco.value.toLowerCase();
 
-function atualizarInterface(){
-  const list = filtrar();
-  atualizarStats(list);
-  atualizarLista(list);
-  atualizarTabela(list);
-  atualizarMapa(list);
-}
+    return postos.filter(p =>
+      (!uf || p.uf === uf) &&
+      (!cidade || p.cidade === cidade) &&
+      (!merc || p.mercadoria === merc) &&
+      (!nome || p.nome.toLowerCase().includes(nome)) &&
+      (!end || p.endereco.toLowerCase().includes(end))
+    );
+  }
 
-function atualizarStats(l){
-  statsAbaixo.textContent = l.filter(p=>p.status==="abaixo").length;
-  statsMedia.textContent = l.filter(p=>p.status==="media").length;
-  statsAcima.textContent = l.filter(p=>p.status==="acima").length;
-  statsMuito.textContent = l.filter(p=>p.status==="muito_acima").length;
-}
+  function atualizarInterface(){
+    const list = filtrar();
+    atualizarStats(list);
+    atualizarLista(list);
+    atualizarTabela(list);
+    atualizarMapa(list);
+  }
 
-function atualizarLista(l){
-  listaPostos.innerHTML="";
-  const top = l
-    .filter(p=>["abaixo","media"].includes(p.status))
-    .sort((a,b)=>a.precoNum-b.precoNum)
-    .slice(0,10);
+  function atualizarStats(l){
+    statsAbaixo.textContent = l.filter(p=>p.status==="abaixo").length;
+    statsMedia.textContent  = l.filter(p=>p.status==="media").length;
+    statsAcima.textContent  = l.filter(p=>p.status==="acima").length;
+    statsMuito.textContent  = l.filter(p=>p.status==="muito_acima").length;
+  }
 
-  top.forEach(p=>{
-    listaPostos.innerHTML+=`
-      <div class='posto-item'>
-        <strong>${p.nome}</strong><br>
-        ${p.cidade} - ${p.uf}<br>
-        R$ ${p.precoNum?.toFixed(2)} • ${p.desvioNum?.toFixed(2)}%
-      </div>
-    `;
-  });
-}
+  function atualizarLista(list){
+    listaPostos.innerHTML = "";
+    const top = list
+      .filter(p=>["abaixo","media"].includes(p.status))
+      .sort((a,b)=>a.precoNum - b.precoNum)
+      .slice(0,10);
 
-function atualizarTabela(l){
-  tabelaAcima.innerHTML="";
-  const crit = l.filter(p=>p.status==="acima"||p.status==="muito_acima")
-                .sort((a,b)=>b.desvioNum-a.desvioNum);
-  crit.forEach(p=>{
-    tabelaAcima.innerHTML+=`
-      <tr>
-        <td>${p.nome}</td>
-        <td>${p.cidade}</td>
-        <td>${p.desvioNum?.toFixed(2)}%</td>
-        <td>R$ ${p.precoNum?.toFixed(2)}</td>
-        <td>${p.status}</td>
-      </tr>`;
-  });
-}
+    top.forEach(p=>{
+      listaPostos.innerHTML += `
+        <div class="posto-item">
+          <div class="posto-nome">${p.nome}</div>
+          <div class="posto-det">${p.cidade} - ${p.uf}</div>
+          <div class="posto-det">R$ ${p.precoNum?.toFixed(2)} • ${p.desvioNum?.toFixed(2)}%</div>
+        </div>
+      `;
+    });
+  }
 
-async function atualizarMapa(l){
-  markersLayer.clearLayers();
-  const top = l.filter(p=>["abaixo","media"].includes(p.status))
-               .sort((a,b)=>a.precoNum-b.precoNum)
-               .slice(0,10);
+  function atualizarTabela(list){
+    tabelaAcima.innerHTML = "";
+    const crit = list
+      .filter(p=>["acima","muito_acima"].includes(p.status))
+      .sort((a,b)=>b.desvioNum - a.desvioNum);
 
-  for(const p of top){
-    const q = `${p.endereco}, ${p.cidade} - ${p.uf}`;
-    const url=`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=1`;
-    const resp=await fetch(url);
-    const data=await resp.json();
-    if(!data.length) continue;
+    crit.forEach(p=>{
+      tabelaAcima.innerHTML += `
+        <tr>
+          <td>${p.nome}</td>
+          <td>${p.cidade}</td>
+          <td>${p.desvioNum?.toFixed(2)}%</td>
+          <td>R$ ${p.precoNum?.toFixed(2)}</td>
+          <td>${p.status}</td>
+        </tr>
+      `;
+    });
+  }
 
-    const lat=data[0].lat, lon=data[0].lon;
+  async function atualizarMapa(list){
+    markersLayer.clearLayers();
 
-    L.circleMarker([lat,lon],{
-      radius:6,fillColor:"#22c55e",color:"#14532d",
-      fillOpacity:0.9,weight:2
-    })
-    .bindPopup(`<strong>${p.nome}</strong><br>R$ ${p.precoNum?.toFixed(2)}`)
-    .addTo(markersLayer);
-  }
-}
+    const top = list
+      .filter(p=>["abaixo","media"].includes(p.status))
+      .sort((a,b)=>a.precoNum - b.precoNum)
+      .slice(0,10);
+
+    for(const p of top){
+      const q = `${p.endereco}, ${p.cidade} - ${p.uf}`;
+      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=1`;
+
+      const r = await fetch(url);
+      const data = await r.json();
+      if(!data.length) continue;
+
+      const lat = data[0].lat;
+      const lon = data[0].lon;
+
+      L.circleMarker([lat,lon],{
+        radius:6,
+        fillColor:"#22c55e",
+        color:"#14532d",
+        fillOpacity:0.9,
+        weight:2
+      })
+      .bindPopup(`<strong>${p.nome}</strong><br>R$ ${p.precoNum.toFixed(2)}`)
+      .addTo(markersLayer);
+    }
+  }
+
 </script>
 
 </body>
