@@ -4,20 +4,15 @@
   <meta charset="UTF-8" />
   <title>Painel de Postos - Alloha Fibra</title>
 
-  <!-- Leaflet (Mapa) -->
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-  />
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-  <!-- PapaParse (Leitura CSV) -->
+  <!-- PapaParse -->
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 
   <style>
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
@@ -29,7 +24,7 @@
       overflow: hidden;
     }
 
-    /* Sidebar com logo e título */
+    /* Sidebar */
     .sidebar {
       width: 260px;
       background: #001059;
@@ -38,36 +33,16 @@
       display: flex;
       flex-direction: column;
       gap: 16px;
-      box-shadow: 4px 0 10px rgba(0, 0, 0, 0.25);
+      box-shadow: 4px 0 10px rgba(0,0,0,0.25);
       z-index: 10;
     }
 
-    .sidebar-logo {
-      display: flex;
-      justify-content: center;
-      margin-bottom: 10px;
-    }
+    .sidebar-logo { display: flex; justify-content: center; margin-bottom: 10px; }
+    .sidebar-logo img { max-width: 160px; height: auto; }
 
-    .sidebar-logo img {
-      max-width: 160px;
-      height: auto;
-    }
-
-    .sidebar-title-main {
-      font-size: 18px;
-      font-weight: 600;
-    }
-
-    .sidebar-title-sub {
-      font-size: 13px;
-      opacity: 0.9;
-    }
-
-    .sidebar-info {
-      font-size: 11px;
-      opacity: 0.8;
-      margin-top: 8px;
-    }
+    .sidebar-title-main { font-size: 18px; font-weight: 600; }
+    .sidebar-title-sub { font-size: 13px; opacity: 0.9; }
+    .sidebar-info { font-size: 11px; opacity: 0.8; margin-top: 8px; }
 
     .tag {
       display: inline-block;
@@ -76,11 +51,11 @@
       border-radius: 999px;
       border: 1px solid #48ef6c;
       color: #48ef6c;
-      background: rgba(72, 239, 108, 0.15);
+      background: rgba(72,239,108,0.15);
       margin-top: 6px;
     }
 
-    /* Área do meio (filtros + listas + tabela) */
+    /* Painel central */
     .main-panel {
       width: 420px;
       background: #ffffff;
@@ -92,15 +67,8 @@
       overflow-y: auto;
     }
 
-    .main-panel h2 {
-      margin: 0 0 4px;
-      font-size: 16px;
-    }
-
-    .main-panel small {
-      color: #6b7280;
-      font-size: 11px;
-    }
+    .main-panel h2 { margin: 0 0 4px; font-size: 16px; }
+    .main-panel small { color: #6b7280; font-size: 11px; }
 
     .filtros {
       margin-top: 8px;
@@ -116,8 +84,7 @@
       color: #111827;
     }
 
-    select,
-    input[type="text"] {
+    select, input[type="text"] {
       width: 100%;
       padding: 8px 10px;
       border-radius: 999px;
@@ -128,11 +95,10 @@
       transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
     }
 
-    select:focus,
-    input[type="text"]:focus {
+    select:focus, input[type="text"]:focus {
       border-color: #48ef6c;
       background: #ffffff;
-      box-shadow: 0 0 0 2px rgba(72, 239, 108, 0.25);
+      box-shadow: 0 0 0 2px rgba(72,239,108,0.25);
     }
 
     .section-card {
@@ -141,7 +107,7 @@
       border-radius: 12px;
       border: 1px solid #e5e7eb;
       padding: 10px 10px 6px;
-      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+      box-shadow: 0 1px 3px rgba(15,23,42,0.08);
     }
 
     .section-header {
@@ -159,10 +125,7 @@
       gap: 6px;
     }
 
-    .section-count {
-      font-size: 11px;
-      color: #6b7280;
-    }
+    .section-count { font-size: 11px; color: #6b7280; }
 
     .badge {
       display: inline-block;
@@ -174,92 +137,31 @@
       text-transform: uppercase;
     }
 
-    .badge-abaixo {
-      background: #dcfce7;
-      color: #166534;
-      border: 1px solid #bbf7d0;
-    }
+    .badge-abaixo { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+    .badge-media { background: #dbeafe; color: #1d4ed8; border: 1px solid #bfdbfe; }
+    .badge-acima { background: #fef9c3; color: #854d0e; border: 1px solid #facc15; }
+    .badge-muito { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
 
-    .badge-media {
-      background: #dbeafe;
-      color: #1d4ed8;
-      border: 1px solid #bfdbfe;
-    }
-
-    .badge-acima {
-      background: #fef9c3;
-      color: #854d0e;
-      border: 1px solid #facc15;
-    }
-
-    .badge-muito {
-      background: #fee2e2;
-      color: #b91c1c;
-      border: 1px solid #fecaca;
-    }
-
-    /* Lista lateral (abaixo + média) */
     .lista-postos {
       max-height: 220px;
       overflow-y: auto;
       padding-right: 4px;
     }
 
-    .lista-postos::-webkit-scrollbar {
-      width: 6px;
-    }
+    .posto-item { padding: 6px 2px; border-bottom: 1px dashed #e5e7eb; font-size: 12px; }
+    .posto-item:last-child { border-bottom: none; }
+    .posto-nome { font-weight: 600; color: #111827; }
+    .posto-det { font-size: 11px; color: #6b7280; }
 
-    .lista-postos::-webkit-scrollbar-thumb {
-      background: #d1d5db;
-      border-radius: 999px;
-    }
-
-    .posto-item {
-      padding: 6px 2px;
-      border-bottom: 1px dashed #e5e7eb;
-      font-size: 12px;
-    }
-
-    .posto-item:last-child {
-      border-bottom: none;
-    }
-
-    .posto-nome {
-      font-weight: 600;
-      color: #111827;
-    }
-
-    .posto-det {
-      font-size: 11px;
-      color: #6b7280;
-    }
-
-    /* Tabela (acima / muito acima) */
     table {
       width: 100%;
       border-collapse: collapse;
       font-size: 11px;
       margin-top: 6px;
     }
+    table thead { background: #001059; color: #f9fafb; }
+    th, td { padding: 6px 4px; border: 1px solid #e5e7eb; text-align:left; }
 
-    table thead {
-      background: #001059;
-      color: #f9fafb;
-    }
-
-    th,
-    td {
-      padding: 6px 4px;
-      border: 1px solid #e5e7eb;
-      text-align: left;
-    }
-
-    th {
-      font-weight: 600;
-      font-size: 11px;
-    }
-
-    /* Área do mapa à direita */
     .map-panel {
       flex: 1;
       padding: 16px;
@@ -273,158 +175,99 @@
       background: #ffffff;
       border-radius: 16px;
       border: 1px solid #e5e7eb;
-      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.1);
+      box-shadow: 0 2px 8px rgba(15,23,42,0.1);
       padding: 10px;
       display: flex;
       flex-direction: column;
       gap: 6px;
     }
 
-    .map-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 13px;
-      font-weight: 500;
-    }
+    #map { flex: 1; border-radius: 12px; overflow: hidden; }
 
-    .map-header span {
-      font-size: 11px;
-      color: #6b7280;
-    }
-
-    #map {
-      flex: 1;
-      border-radius: 12px;
-      overflow: hidden;
-    }
-
-    .hint {
-      font-size: 11px;
-      color: #6b7280;
-    }
-
-    /* Loader simples */
     .loader {
       position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
+      top: 50%; left: 50%;
+      transform: translate(-50%,-50%);
       border: 5px solid #e5e7eb;
       border-top: 5px solid #48ef6c;
       border-radius: 50%;
-      width: 34px;
-      height: 34px;
+      width: 34px; height: 34px;
       animation: spin 1s linear infinite;
       display: none;
       z-index: 999;
     }
 
-    @keyframes spin {
-      0% {
-        transform: translate(-50%, -50%) rotate(0deg);
-      }
-      100% {
-        transform: translate(-50%, -50%) rotate(360deg);
-      }
-    }
-
-    /* Responsivo */
-    @media (max-width: 960px) {
-      body {
-        flex-direction: column;
-        height: auto;
-      }
-      .sidebar {
-        width: 100%;
-        flex-direction: row;
-        align-items: center;
-        justify-content: space-between;
-      }
-      .main-panel {
-        width: 100%;
-        border-right: none;
-        border-top: 3px solid #001059;
-      }
-      .map-panel {
-        padding: 10px;
-        height: 380px;
-      }
-    }
+    @keyframes spin { 0%{transform:translate(-50%,-50%) rotate(0deg);} 100%{transform:translate(-50%,-50%) rotate(360deg);} }
   </style>
 </head>
 
 <body>
   <div class="loader" id="loader"></div>
 
-  <!-- Sidebar -->
   <aside class="sidebar">
     <div class="sidebar-logo">
-      <!-- Logo branca -->
-      <img src="Imagem1.png" alt="Alloha Fibra" />
+      <img src="Imagem1.png" alt="Alloha Fibra">
     </div>
+
     <div>
       <div class="sidebar-title-main">Painel de Postos</div>
       <div class="sidebar-title-sub">Desvio de Preço & Classificação</div>
-      <div class="sidebar-info">
-        Foco em <strong>postos abaixo da média</strong> no mapa e visão
-        geral dos <strong>demais grupos</strong> em listas e tabela.
+      <div id="contadorBlacklist" class="sidebar-info">
+        Carregando...
       </div>
       <span class="tag">Alloha Frotas · Uso interno</span>
     </div>
   </aside>
 
-  <!-- Painel central (filtros + listas + tabela) -->
   <main class="main-panel">
+
     <section>
       <h2>Filtros</h2>
-      <small>Use os filtros para localizar rapidamente os postos por UF, cidade, nome ou endereço.</small>
+      <small>Filtre por UF, Cidade, Nome, Endereço e Combustível.</small>
 
       <div class="filtros">
+
         <div>
           <label for="filtroUF">UF</label>
-          <select id="filtroUF">
-            <option value="">Todas</option>
-          </select>
+          <select id="filtroUF"><option value="">Todas</option></select>
         </div>
 
         <div>
           <label for="filtroCidade">Cidade</label>
-          <select id="filtroCidade">
-            <option value="">Todas</option>
-          </select>
+          <select id="filtroCidade"><option value="">Todas</option></select>
+        </div>
+
+        <div>
+          <label for="filtroComb">Combustível</label>
+          <select id="filtroComb"><option value="">Todos</option></select>
         </div>
 
         <div>
           <label for="filtroNome">Nome do posto</label>
-          <input type="text" id="filtroNome" placeholder="Digite parte do nome" />
+          <input type="text" id="filtroNome" placeholder="Digite parte do nome">
         </div>
 
         <div>
           <label for="filtroEndereco">Endereço</label>
-          <input
-            type="text"
-            id="filtroEndereco"
-            placeholder="Digite parte do logradouro"
-          />
+          <input type="text" id="filtroEndereco" placeholder="Digite parte do endereço">
         </div>
+
       </div>
     </section>
-
-    <!-- Lista: abaixo + na média -->
+    <!-- LISTA ABAIXO / MÉDIA -->
     <section class="section-card">
       <div class="section-header">
         <div class="section-header-title">
           <span class="badge badge-abaixo">Abaixo</span>
           <span class="badge badge-media">Na média</span>
-          Postos em situação aceitável ou melhor
+          Postos aceitáveis ou melhores
         </div>
-        <div class="section-count" id="countLista">(0)</div>
+        <div id="countLista" class="section-count">(0)</div>
       </div>
-      <div class="lista-postos" id="listaPostos"></div>
+      <div id="listaPostos" class="lista-postos"></div>
     </section>
 
-    <!-- Tabela: acima + muito acima -->
+    <!-- TABELA ACIMA / MUITO ACIMA -->
     <section class="section-card">
       <div class="section-header">
         <div class="section-header-title">
@@ -432,7 +275,7 @@
           <span class="badge badge-muito">Muito acima</span>
           Postos com desvio crítico
         </div>
-        <div class="section-count" id="countTabela">(0)</div>
+        <div id="countTabela" class="section-count">(0)</div>
       </div>
       <table>
         <thead>
@@ -441,163 +284,141 @@
             <th>Cidade/UF</th>
             <th>Desvio (%)</th>
             <th>Preço (R$)</th>
+            <th>Combustível</th>
             <th>Grupo</th>
           </tr>
         </thead>
         <tbody id="tabelaAcima"></tbody>
       </table>
     </section>
+
   </main>
 
-  <!-- Painel de mapa -->
+  <!-- MAPA -->
   <section class="map-panel">
     <div class="map-card">
       <div class="map-header">
         <div>Mapa – Postos abaixo da média</div>
-        <span>O mapa exibe somente os postos classificados como “Abaixo da média”.</span>
+        <span>Somente postos abaixo da média aparecem no mapa.</span>
       </div>
       <div id="map"></div>
-      <div class="hint">
-        Dica: use os filtros para focar em uma região específica. Os marcadores
-        exibem nome, endereço, desvio e preço.
-      </div>
     </div>
   </section>
 
-  <script>
-    // ============ CONFIG ============
-    const CSV_FILE = "postos-mapa.csv";
+  <!-- ======================= JAVASCRIPT ========================= -->
 
+  <script>
+    const CSV_FILE = "postos-mapa.csv";
     const loader = document.getElementById("loader");
+
+    let postos = [];
+    let map, markersLayer;
+    const geocodeCache = {};
+
     function showLoader(show) {
       loader.style.display = show ? "block" : "none";
     }
 
-    let postos = [];
-    let map, markersLayer;
-    const geocodeCache =
-      JSON.parse(localStorage.getItem("geocodeCachePostosAbaixo")) || {};
-
-    function saveCache() {
-      localStorage.setItem(
-        "geocodeCachePostosAbaixo",
-        JSON.stringify(geocodeCache)
-      );
-    }
-
     function getCol(row, name) {
-      const key = Object.keys(row).find((k) => k.trim() === name);
+      const key = Object.keys(row).find(k => k.trim() === name);
       return key ? row[key] : "";
     }
 
-    function parsePreco(valor) {
-      if (valor === null || valor === undefined) return null;
-      let s = String(valor).replace(/[R$\s]/g, "");
-      if (s === "") return null;
-      if (s.indexOf(",") >= 0 && s.indexOf(".") === -1) {
-        s = s.replace(".", "").replace(",", ".");
-      }
-      const n = parseFloat(s);
-      return isNaN(n) ? null : n;
+    function parsePreco(v) {
+      if (!v) return null;
+      let s = String(v).replace(/[R$\s]/g, "");
+      if (s.includes(",") && !s.includes(".")) s = s.replace(",", ".");
+      return isNaN(parseFloat(s)) ? null : parseFloat(s);
     }
 
-    function parseDesvio(valor) {
-      if (valor === null || valor === undefined) return null;
-      let s = String(valor).replace("%", "").trim();
-      if (s.indexOf(".") >= 0 && s.indexOf(",") >= 0) {
-        s = s.replace(".", "").replace(",", ".");
-      } else if (s.indexOf(",") >= 0) {
-        s = s.replace(",", ".");
-      }
-      const n = parseFloat(s);
-      return isNaN(n) ? null : n;
+    function parseDesvio(v) {
+      if (!v) return null;
+      let s = String(v).replace("%", "");
+      if (s.includes(",") && !s.includes(".")) s = s.replace(",", ".");
+      return isNaN(parseFloat(s)) ? null : parseFloat(s);
     }
 
     function fmt2(n) {
-      return n !== null && !isNaN(n) ? n.toFixed(2) : "";
+      return n != null ? n.toFixed(2) : "";
     }
 
-    function classificarStatus(blacklist) {
-      if (!blacklist) return "desconhecido";
-      const s = String(blacklist);
-      if (s.includes("Abaixo da média")) return "abaixo";
-      if (s.includes("Dentro da média")) return "media";
+    function classificarStatus(s) {
+      if (!s) return "desconhecido";
+      if (s.includes("Abaixo")) return "abaixo";
+      if (s.includes("Dentro") || s.includes("Média")) return "media";
       if (s.includes("Muito acima")) return "muito_acima";
-      if (s.includes("Acima da média")) return "acima";
+      if (s.includes("Acima")) return "acima";
       return "desconhecido";
     }
 
-    // ============ LEITURA CSV ============
+    // ====================== LER CSV ======================
     showLoader(true);
 
     Papa.parse(CSV_FILE, {
       download: true,
       header: true,
       skipEmptyLines: true,
-      complete: function (results) {
-        postos = results.data
-          .map((row) => {
-            const nome = getCol(row, "Nome EC");
-            const uf = getCol(row, "UF EC");
-            const cidade = getCol(row, "Cidade EC");
-            const logradouro = getCol(row, "Logradouro EC");
-            const desvioBruto = getCol(row, "Desvio de Preço (%)");
-            const blacklist = getCol(row, "Blacklist");
-            const precoBruto =
-              getCol(row, "Preço por Litro") || getCol(row, " Preço por Litro ");
+      complete: results => {
+        postos = results.data.map(row => {
+          const nome = getCol(row, "Nome EC");
+          const uf = getCol(row, "UF EC");
+          const cidade = getCol(row, "Cidade EC");
+          const endereco = getCol(row, "Logradouro EC");
+          const combustivel = getCol(row, "Combustível");
+          const blacklist = getCol(row, "Blacklist");
 
-            if (!nome || !uf || !cidade || !logradouro) return null;
+          if (!nome || !uf || !cidade || !endereco || !combustivel) return null;
 
-            const status = classificarStatus(blacklist);
-
-            return {
-              nome: String(nome).trim(),
-              uf: String(uf).trim(),
-              cidade: String(cidade).trim(),
-              endereco: String(logradouro).trim(),
-              blacklist: blacklist,
-              status: status,
-              desvioNum: parseDesvio(desvioBruto),
-              precoNum: parsePreco(precoBruto),
-            };
-          })
-          .filter((x) => x !== null);
+          return {
+            nome: nome.trim(),
+            uf: uf.trim(),
+            cidade: cidade.trim(),
+            endereco: endereco.trim(),
+            combustivel: combustivel.trim(),
+            desvioNum: parseDesvio(getCol(row, "Desvio de Preço (%)")),
+            precoNum: parsePreco(getCol(row, "Preço por Litro")),
+            status: classificarStatus(blacklist),
+            blacklist: blacklist
+          };
+        }).filter(x => x);
 
         inicializarMapa();
         inicializarFiltros();
+        atualizarContadorBlacklist();
         atualizarInterface().then(() => showLoader(false));
-      },
-      error: function (err) {
-        console.error("Erro ao ler CSV:", err);
-        alert(
-          "Erro ao carregar o arquivo 'postos-mapa.csv'. Verifique se o arquivo está na mesma pasta do HTML."
-        );
-        showLoader(false);
-      },
+      }
     });
 
-    // ============ FILTROS ============
+    // ==================== FILTROS ====================
+
     function inicializarFiltros() {
       const ufSelect = document.getElementById("filtroUF");
       const cidadeSelect = document.getElementById("filtroCidade");
       const nomeInput = document.getElementById("filtroNome");
       const endInput = document.getElementById("filtroEndereco");
+      const combSelect = document.getElementById("filtroComb");
 
-      const ufs = Array.from(new Set(postos.map((p) => p.uf))).sort();
-      ufs.forEach((uf) => {
+      const ufs = [...new Set(postos.map(p => p.uf))].sort();
+      ufs.forEach(uf => {
         const opt = document.createElement("option");
         opt.value = uf;
         opt.textContent = uf;
         ufSelect.appendChild(opt);
       });
 
-      ufSelect.addEventListener("change", () => {
-        preencherCidades();
-        atualizarInterface();
+      const combustiveis = [...new Set(postos.map(p => p.combustivel))].sort();
+      combustiveis.forEach(c => {
+        const opt = document.createElement("option");
+        opt.value = c;
+        opt.textContent = c;
+        combSelect.appendChild(opt);
       });
+
+      ufSelect.addEventListener("change", () => { preencherCidades(); atualizarInterface(); });
       cidadeSelect.addEventListener("change", atualizarInterface);
       nomeInput.addEventListener("input", atualizarInterface);
       endInput.addEventListener("input", atualizarInterface);
+      combSelect.addEventListener("change", atualizarInterface);
 
       preencherCidades();
     }
@@ -607,15 +428,8 @@
       const cidadeSelect = document.getElementById("filtroCidade");
       cidadeSelect.innerHTML = '<option value="">Todas</option>';
 
-      const cidades = Array.from(
-        new Set(
-          postos
-            .filter((p) => (!uf || p.uf === uf))
-            .map((p) => p.cidade)
-        )
-      ).sort();
-
-      cidades.forEach((cidade) => {
+      const cidades = [...new Set(postos.filter(p => !uf || p.uf === uf).map(p => p.cidade))].sort();
+      cidades.forEach(cidade => {
         const opt = document.createElement("option");
         opt.value = cidade;
         opt.textContent = cidade;
@@ -627,188 +441,166 @@
       const uf = document.getElementById("filtroUF").value;
       const cidade = document.getElementById("filtroCidade").value;
       const nome = document.getElementById("filtroNome").value.toLowerCase();
-      const endereco = document
-        .getElementById("filtroEndereco")
-        .value.toLowerCase();
+      const endereco = document.getElementById("filtroEndereco").value.toLowerCase();
+      const comb = document.getElementById("filtroComb").value;
 
-      return postos.filter((p) => {
-        return (
-          (!uf || p.uf === uf) &&
-          (!cidade || p.cidade === cidade) &&
-          (!nome || p.nome.toLowerCase().includes(nome)) &&
-          (!endereco || p.endereco.toLowerCase().includes(endereco))
-        );
-      });
+      return postos.filter(p =>
+        (!uf || p.uf === uf) &&
+        (!cidade || p.cidade === cidade) &&
+        (!comb || p.combustivel === comb) &&
+        (!nome || p.nome.toLowerCase().includes(nome)) &&
+        (!endereco || p.endereco.toLowerCase().includes(endereco))
+      );
     }
 
-    // ============ MAPA ============
+    // =============== CONTADOR BLACKLIST =================
+    function atualizarContadorBlacklist() {
+      const cont = { abaixo: 0, media: 0, acima: 0, muito_acima: 0 };
+
+      postos.forEach(p => {
+        if (cont[p.status] !== undefined) cont[p.status]++;
+      });
+
+      document.getElementById("contadorBlacklist").innerHTML = `
+        <strong>Abaixo:</strong> ${cont.abaixo} ·
+        <strong>Média:</strong> ${cont.media} ·
+        <strong>Acima:</strong> ${cont.acima} ·
+        <strong>Muito acima:</strong> ${cont.muito_acima}
+      `;
+    }
+
+    // =============== MAPA ======================
     function inicializarMapa() {
       map = L.map("map").setView([-15.78, -47.93], 4);
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        maxZoom: 18,
-      }).addTo(map);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
       markersLayer = L.layerGroup().addTo(map);
     }
 
     async function geocodeEndereco(posto) {
       const chave = `${posto.endereco}, ${posto.cidade} - ${posto.uf}`;
-      if (geocodeCache[chave]) {
-        return geocodeCache[chave];
-      }
+      if (geocodeCache[chave]) return geocodeCache[chave];
 
-      const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(
-        chave
-      )}`;
+      const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(chave)}`;
 
       try {
-        const resp = await fetch(url, {
-          headers: {
-            "Accept-Language": "pt-BR",
-          },
-        });
+        const resp = await fetch(url);
         const data = await resp.json();
-        if (data && data.length > 0) {
+        if (data.length > 0) {
           const lat = parseFloat(data[0].lat);
           const lon = parseFloat(data[0].lon);
-          const coord = { lat, lon };
-          geocodeCache[chave] = coord;
-          saveCache();
-          return coord;
+          geocodeCache[chave] = { lat, lon };
+          return geocodeCache[chave];
         }
-      } catch (e) {
-        console.error("Erro no geocode:", e);
-      }
+      } catch(e){}
+
       return null;
     }
 
-    async function atualizarMapa(postosFiltrados) {
+    async function atualizarMapa(lista) {
       markersLayer.clearLayers();
-
-      const abaixo = postosFiltrados.filter((p) => p.status === "abaixo");
-
+      const abaixo = lista.filter(p => p.status === "abaixo");
       if (abaixo.length === 0) return;
 
       const bounds = [];
-      // Limita quantidade para não ficar pesado (ex: 80 primeiros)
-      const limitados = abaixo.slice(0, 80);
 
-      for (const posto of limitados) {
+      for (const posto of abaixo.slice(0,80)) {
         const coord = await geocodeEndereco(posto);
         if (!coord) continue;
-
-        const parts = [];
-        parts.push(`<strong>${posto.nome}</strong>`);
-        parts.push(`${posto.endereco}`);
-        parts.push(`${posto.cidade} - ${posto.uf}`);
-        if (posto.desvioNum !== null) {
-          parts.push(`Desvio: ${fmt2(posto.desvioNum)}%`);
-        }
-        if (posto.precoNum !== null) {
-          parts.push(`Preço: R$ ${fmt2(posto.precoNum)}`);
-        }
 
         const marker = L.circleMarker([coord.lat, coord.lon], {
           radius: 7,
           fillColor: "#22c55e",
           color: "#14532d",
           weight: 2,
-          opacity: 1,
           fillOpacity: 0.9,
         }).addTo(markersLayer);
 
-        marker.bindPopup(parts.join("<br />"));
+        marker.bindPopup(`
+          <strong>${posto.nome}</strong><br>
+          ${posto.endereco}<br>
+          ${posto.cidade} - ${posto.uf}<br>
+          Combustível: ${posto.combustivel}<br>
+          Desvio: ${fmt2(posto.desvioNum)}%<br>
+          Preço: R$ ${fmt2(posto.precoNum)}
+        `);
+
         bounds.push([coord.lat, coord.lon]);
       }
 
-      if (bounds.length > 0) {
-        map.fitBounds(bounds, { padding: [30, 30] });
-      }
+      if (bounds.length > 0) map.fitBounds(bounds, { padding: [30,30] });
     }
 
-    // ============ LISTA (abaixo + média) ============
-    function atualizarLista(postosFiltrados) {
+    // =============== LISTA =======================
+    function atualizarLista(lista) {
       const container = document.getElementById("listaPostos");
-      const countEl = document.getElementById("countLista");
       container.innerHTML = "";
 
-      const lista = postosFiltrados.filter(
-        (p) => p.status === "abaixo" || p.status === "media"
+      const filtrados = lista.filter(p =>
+        p.status === "abaixo" || p.status === "media"
       );
 
-      countEl.textContent = `(${lista.length})`;
+      document.getElementById("countLista").textContent = `(${filtrados.length})`;
 
-      lista.forEach((p) => {
+      filtrados.forEach(p => {
         const div = document.createElement("div");
         div.className = "posto-item";
 
-        const labelStatus =
-          p.status === "abaixo"
-            ? '<span class="badge badge-abaixo">Abaixo da média</span>'
-            : '<span class="badge badge-media">Na média</span>';
-
-        div.innerHTML =
-          `<div class="posto-nome">${p.nome}</div>` +
-          `<div class="posto-det">${p.endereco}</div>` +
-          `<div class="posto-det">${p.cidade} / ${p.uf}</div>` +
-          (p.desvioNum !== null
-            ? `<div class="posto-det">Desvio: ${fmt2(
-                p.desvioNum
-              )}%</div>`
-            : "") +
-          (p.precoNum !== null
-            ? `<div class="posto-det">Preço: R$ ${fmt2(
-                p.precoNum
-              )}</div>`
-            : "") +
-          `<div class="posto-det">${labelStatus}</div>`;
+        div.innerHTML = `
+          <div class="posto-nome">${p.nome}</div>
+          <div class="posto-det">${p.endereco}</div>
+          <div class="posto-det">${p.cidade} / ${p.uf}</div>
+          <div class="posto-det">Combustível: ${p.combustivel}</div>
+          <div class="posto-det">Desvio: ${fmt2(p.desvioNum)}%</div>
+          <div class="posto-det">Preço: R$ ${fmt2(p.precoNum)}</div>
+        `;
 
         container.appendChild(div);
       });
     }
 
-    // ============ TABELA (acima + muito acima) ============
-    function atualizarTabela(postosFiltrados) {
+    // =============== TABELA =======================
+    function atualizarTabela(lista) {
       const tbody = document.getElementById("tabelaAcima");
-      const countEl = document.getElementById("countTabela");
       tbody.innerHTML = "";
 
-      const lista = postosFiltrados.filter(
-        (p) => p.status === "acima" || p.status === "muito_acima"
+      const filtrados = lista.filter(
+        p => p.status === "acima" || p.status === "muito_acima"
       );
 
-      // Ordenar por desvio desc, se houver
-      lista.sort((a, b) => (b.desvioNum || 0) - (a.desvioNum || 0));
+      document.getElementById("countTabela").textContent = `(${filtrados.length})`;
 
-      countEl.textContent = `(${lista.length})`;
+      filtrados.sort((a,b)=>(b.desvioNum||0)-(a.desvioNum||0));
 
-      lista.forEach((p) => {
+      filtrados.forEach(p => {
         const tr = document.createElement("tr");
 
-        const grupoBadge =
-          p.status === "muito_acima"
-            ? '<span class="badge badge-muito">Muito acima</span>'
-            : '<span class="badge badge-acima">Acima da média</span>';
-
-        tr.innerHTML =
-          `<td>${p.nome}</td>` +
-          `<td>${p.cidade} / ${p.uf}</td>` +
-          `<td>${p.desvioNum !== null ? fmt2(p.desvioNum) + "%" : ""}</td>` +
-          `<td>${p.precoNum !== null ? "R$ " + fmt2(p.precoNum) : ""}</td>` +
-          `<td>${grupoBadge}</td>`;
+        tr.innerHTML = `
+          <td>${p.nome}</td>
+          <td>${p.cidade}/${p.uf}</td>
+          <td>${fmt2(p.desvioNum)}%</td>
+          <td>${p.precoNum ? "R$ " + fmt2(p.precoNum) : ""}</td>
+          <td>${p.combustivel}</td>
+          <td>${p.status.replace("_"," ")}</td>
+        `;
 
         tbody.appendChild(tr);
       });
     }
 
-    // ============ ATUALIZAÇÃO GERAL ============
+    // =============== ATUALIZAÇÃO GERAL ======================
     async function atualizarInterface() {
       showLoader(true);
+
       const filtrados = filtrarPostos();
       atualizarLista(filtrados);
       atualizarTabela(filtrados);
       await atualizarMapa(filtrados);
+
       showLoader(false);
     }
+
   </script>
+
 </body>
 </html>
+
