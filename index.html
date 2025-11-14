@@ -4,18 +4,24 @@
   <meta charset="UTF-8" />
   <title>Painel de Postos - Alloha Fibra</title>
 
-  <!-- Leaflet -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <!-- Leaflet (Mapa) -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-  <!-- PapaParse -->
+  <!-- PapaParse (Leitura CSV) -->
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 
   <style>
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       margin: 0;
-      font-family: "Segoe UI", Arial;
+      font-family: "Segoe UI", Arial, sans-serif;
       background: #f3f6fb;
       color: #001059;
       display: flex;
@@ -27,112 +33,181 @@
     .sidebar {
       width: 260px;
       background: #001059;
-      color: white;
-      padding: 20px;
+      color: #f9fafb;
+      padding: 20px 18px;
       display: flex;
       flex-direction: column;
       gap: 16px;
       box-shadow: 4px 0 10px rgba(0,0,0,0.25);
+      z-index: 10;
     }
 
-    .sidebar img {
+    .sidebar-logo {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 10px;
+    }
+
+    .sidebar-logo img {
       max-width: 160px;
-      display: block;
-      margin: 0 auto;
+      height: auto;
+    }
+
+    .sidebar-title-main {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .sidebar-title-sub {
+      font-size: 13px;
+      opacity: 0.9;
     }
 
     .tag {
       display: inline-block;
-      padding: 4px 10px;
+      font-size: 11px;
+      padding: 3px 8px;
       border-radius: 999px;
       border: 1px solid #48ef6c;
       color: #48ef6c;
-      font-size: 11px;
+      background: rgba(72, 239, 108, 0.15);
+      margin-top: 6px;
+    }
+
+    #statsBox {
+      margin-top: 12px;
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    #statsBox span {
+      font-weight: 600;
     }
 
     /* Painel central */
     .main-panel {
       width: 420px;
-      background: white;
-      padding: 16px;
-      overflow-y: auto;
+      background: #ffffff;
+      padding: 16px 18px;
       border-right: 3px solid #001059;
       display: flex;
       flex-direction: column;
       gap: 12px;
+      overflow-y: auto;
+    }
+
+    .main-panel h2 {
+      margin: 0 0 4px;
+      font-size: 16px;
+    }
+
+    .main-panel small {
+      color: #6b7280;
+      font-size: 11px;
     }
 
     label {
       font-size: 12px;
       font-weight: 600;
+      margin-bottom: 3px;
+      color: #111827;
+      display: block;
     }
 
-    select, input[type="text"] {
+    select,
+    input[type="text"] {
       width: 100%;
-      padding: 8px;
-      border-radius: 8px;
+      padding: 8px 10px;
+      border-radius: 999px;
       border: 2px solid #001059;
-      background: #f9fafb;
       font-size: 13px;
       outline: none;
-      transition: 0.2s;
-    }
-    select:focus, input:focus {
-      border-color: #48ef6c;
-      box-shadow: 0 0 4px rgba(72,239,108,0.4);
-      background: white;
+      background: #f9fafb;
+      transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+      margin-bottom: 6px;
     }
 
-    /* Cards */
+    select:focus,
+    input[type="text"]:focus {
+      border-color: #48ef6c;
+      background: #ffffff;
+      box-shadow: 0 0 0 2px rgba(72, 239, 108, 0.25);
+    }
+
     .section-card {
+      margin-top: 8px;
       background: #f9fafb;
       border-radius: 12px;
-      padding: 10px;
       border: 1px solid #e5e7eb;
-      box-shadow: 0 1px 3px rgba(15,23,42,0.08);
+      padding: 10px;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
     }
 
-    .highlight {
-      animation: blink 0.5s ease-in-out;
-    }
-    @keyframes blink {
-      0% { background: #d9ffe0; }
-      100% { background: transparent; }
+    .section-card h4 {
+      margin: 0 0 6px;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
     }
 
     .badge {
+      display: inline-block;
       padding: 2px 6px;
-      border-radius: 8px;
+      border-radius: 999px;
       font-size: 10px;
-      font-weight: bold;
+      font-weight: 700;
     }
-    .badge-abaixo { background:#dcfce7; color:#166534; }
-    .badge-media { background:#dbeafe; color:#1d4ed8; }
-    .badge-acima { background:#fef9c3; color:#854d0e; }
-    .badge-muito { background:#fee2e2; color:#b91c1c; }
+
+    .badge-abaixo { background: #dcfce7; color: #166534; }
+    .badge-media  { background: #dbeafe; color: #1d4ed8; }
+    .badge-acima  { background: #fef9c3; color: #854d0e; }
+    .badge-muito  { background: #fee2e2; color: #b91c1c; }
 
     .posto-item {
-      padding: 6px;
-      border-bottom: 1px dashed #ccc;
+      padding: 6px 2px;
+      border-bottom: 1px dashed #e5e7eb;
       font-size: 12px;
+    }
+
+    .posto-item:last-child {
+      border-bottom: none;
+    }
+
+    .posto-nome {
+      font-weight: 600;
+      color: #111827;
+    }
+
+    .posto-det {
+      font-size: 11px;
+      color: #6b7280;
     }
 
     /* Tabela minimalista */
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 8px;
       font-size: 11px;
+      margin-top: 6px;
     }
 
     table thead {
       background: #001059;
-      color: white;
+      color: #f9fafb;
     }
 
-    table th, table td {
-      padding: 6px;
-      border: 1px solid #ddd;
+    th,
+    td {
+      padding: 6px 4px;
+      border: 1px solid #e5e7eb;
+      text-align: left;
+    }
+
+    tr.linhaPosto:hover {
+      background: #e7ffe7;
+      cursor: pointer;
     }
 
     /* Mapa */
@@ -141,7 +216,7 @@
       padding: 16px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 8px;
     }
 
     #map {
@@ -155,451 +230,474 @@
       position: fixed;
       top: 50%;
       left: 50%;
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
+      transform: translate(-50%, -50%);
       border: 5px solid #e5e7eb;
       border-top: 5px solid #48ef6c;
-      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      width: 34px;
+      height: 34px;
       animation: spin 1s linear infinite;
       display: none;
+      z-index: 999;
     }
+
     @keyframes spin {
-      to { transform: translate(-50%, -50%) rotate(360deg); }
+      0%   { transform: translate(-50%, -50%) rotate(0deg); }
+      100% { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+
+    .highlight {
+      animation: blink 0.5s ease-in-out;
+    }
+
+    @keyframes blink {
+      0%   { box-shadow: 0 0 0px #4ade80; }
+      100% { box-shadow: 0 0 16px rgba(34, 197, 94, 0.7); }
+    }
+
+    @media (max-width: 960px) {
+      body {
+        flex-direction: column;
+        height: auto;
+      }
+      .sidebar {
+        width: 100%;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .main-panel {
+        width: 100%;
+        border-right: none;
+        border-top: 3px solid #001059;
+      }
+      .map-panel {
+        padding: 10px;
+        height: 380px;
+      }
     }
   </style>
 </head>
+
 <body>
+  <div class="loader" id="loader"></div>
 
-<div class="loader" id="loader"></div>
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <img src="Imagem1.png" alt="Alloha Fibra" />
+    </div>
+    <div>
+      <div class="sidebar-title-main">Painel de Postos</div>
+      <div class="sidebar-title-sub">Desvio de Preço & Classificação</div>
+      <span class="tag">Alloha Frotas · Uso interno</span>
 
-<!-- Sidebar -->
-<aside class="sidebar">
-  <img src="Imagem1.png">
-  <div>
-    <h3>Painel de Postos</h3>
-    <p>Desvio de Preço & Classificação</p>
-    <span class="tag">Alloha Frotas · Uso interno</span>
-  </div>
+      <div id="statsBox">
+        Abaixo: <span id="sAbaixo">0</span><br>
+        Média: <span id="sMedia">0</span><br>
+        Acima: <span id="sAcima">0</span><br>
+        Muito acima: <span id="sMuit">0</span>
+      </div>
+    </div>
+  </aside>
 
-  <div id="statsBox">
-    <p>Abaixo: <span id="sAbaixo">0</span></p>
-    <p>Média: <span id="sMedia">0</span></p>
-    <p>Acima: <span id="sAcima">0</span></p>
-    <p>Muito acima: <span id="sMuit">0</span></p>
-  </div>
-</aside>
+  <!-- Painel central -->
+  <main class="main-panel">
+    <section>
+      <h2>Filtros</h2>
+      <small>Filtre por UF, cidade, nome, endereço e mercadoria.</small>
 
-<!-- Painel central -->
-<main class="main-panel">
+      <div class="filtros">
+        <div>
+          <label for="filtroUF">UF</label>
+          <select id="filtroUF">
+            <option value="">Todas</option>
+          </select>
+        </div>
 
-  <h2>Filtros</h2>
+        <div>
+          <label for="filtroCidade">Cidade</label>
+          <select id="filtroCidade">
+            <option value="">Todas</option>
+          </select>
+        </div>
 
-  <label>UF</label>
-  <select id="filtroUF"><option value="">Todas</option></select>
+        <div>
+          <label for="filtroMerc">Mercadoria</label>
+          <select id="filtroMerc">
+            <option value="">Todas</option>
+          </select>
+        </div>
 
-  <label>Cidade</label>
-  <select id="filtroCidade"><option value="">Todas</option></select>
+        <div>
+          <label for="filtroNome">Nome do posto</label>
+          <input type="text" id="filtroNome" placeholder="Digite parte do nome" />
+        </div>
 
-  <label>Mercadoria</label>
-  <select id="filtroMerc"><option value="">Todas</option></select>
+        <div>
+          <label for="filtroEndereco">Endereço</label>
+          <input type="text" id="filtroEndereco" placeholder="Digite parte do endereço" />
+        </div>
+      </div>
+    </section>
 
-  <label>Nome do posto</label>
-  <input type="text" id="filtroNome" placeholder="Digite parte do nome">
+    <!-- Lista abaixo + média -->
+    <section class="section-card" id="cardLista">
+      <h4>
+        <span class="badge badge-abaixo">Abaixo</span>
+        <span class="badge badge-media">Na média</span>
+        Postos aceitáveis ou melhores
+        (<span id="countLista">0</span>)
+      </h4>
+      <div id="listaPostos"></div>
+    </section>
 
-  <label>Endereço</label>
-  <input type="text" id="filtroEndereco" placeholder="Digite parte do endereço">
+    <!-- Tabela top 10 mais baratos (acima + muito acima) -->
+    <section class="section-card" id="cardTabela">
+      <h4>
+        <span class="badge badge-acima">Acima</span>
+        <span class="badge badge-muito">Muito acima</span>
+        TOP 10 mais baratos (dentro dos críticos)
+        (<span id="countTabela">0</span>)
+      </h4>
+      <table>
+        <thead>
+          <tr>
+            <th>Posto</th>
+            <th>Cidade/UF</th>
+            <th>Desvio (%)</th>
+            <th>Preço (R$)</th>
+            <th>Grupo</th>
+          </tr>
+        </thead>
+        <tbody id="tabelaAcima"></tbody>
+      </table>
+    </section>
+  </main>
 
-  <!-- Lista abaixo + média -->
-  <div class="section-card" id="cardLista">
-    <h4>
-      <span class="badge badge-abaixo">Abaixo</span>
-      <span class="badge badge-media">Na média</span>
-      Postos aceitáveis ou melhores
-      (<span id="countLista">0</span>)
-    </h4>
-    <div id="listaPostos"></div>
-  </div>
+  <!-- Painel do mapa -->
+  <section class="map-panel">
+    <h3>Mapa – Postos abaixo da média</h3>
+    <small>Somente os postos abaixo da média aparecem no mapa.</small>
+    <div id="map"></div>
+  </section>
 
-  <!-- Tabela acima + muito acima -->
-  <div class="section-card" id="cardTabela">
-    <h4>
-      <span class="badge badge-acima">Acima</span>
-      <span class="badge badge-muito">Muito acima</span>
-      Postos com desvio crítico
-      (<span id="countTabela">0</span>)
-    </h4>
+  <!-- PARTE 2: SCRIPT VEM AQUI -->
+  <script>
+  /* ============================================================
+   CONFIG
+=============================================================*/
 
-    <table>
-      <thead>
-        <tr>
-          <th>Posto</th>
-          <th>Cidade/UF</th>
-          <th>Desvio (%)</th>
-          <th>Preço (R$)</th>
-          <th>Grupo</th>
-        </tr>
-      </thead>
-      <tbody id="tabelaAcima"></tbody>
-    </table>
-  </div>
+const CSV_FILE = "postos-mapa.csv";
 
-</main>
+let postos = [];
+let map, markersLayer;
+const geocodeCache = JSON.parse(localStorage.getItem("geoCachePostos")) || {};
 
-<!-- Painel do mapa -->
-<section class="map-panel">
-  <h3>Mapa – Postos abaixo da média</h3>
-  <small>Somente os postos abaixo da média aparecem no mapa.</small>
-  <div id="map"></div>
-</section>
+function saveCache() {
+  localStorage.setItem("geoCachePostos", JSON.stringify(geocodeCache));
+}
 
-<!-- PARTE 2 CHEGA NA PRÓXIMA MENSAGEM -->
-<script>
-  const CSV_FILE = "postos-mapa.csv";
+function showLoader(show) {
+  document.getElementById("loader").style.display = show ? "flex" : "none";
+}
 
-  const loader = document.getElementById("loader");
-  const cardLista = document.getElementById("cardLista");
-  const cardTabela = document.getElementById("cardTabela");
+function getCol(row, name) {
+  const key = Object.keys(row).find(k => k.trim() === name);
+  return key ? row[key] : "";
+}
 
-  let postos = [];
-  let map, markersLayer;
-  const geocodeCache = {};
+function parsePreco(v) {
+  if (!v) return null;
+  let s = String(v).replace(/[R$\s]/g, "");
+  if (s.includes(",") && !s.includes(".")) s = s.replace(",", ".");
+  const n = parseFloat(s);
+  return isNaN(n) ? null : n;
+}
 
-  function showLoader(show) {
-    loader.style.display = show ? "block" : "none";
+function parseDesvio(v) {
+  if (!v) return null;
+  let s = String(v).replace("%", "").trim();
+  if (s.includes(",") && !s.includes(".")) s = s.replace(",", ".");
+  const n = parseFloat(s);
+  return isNaN(n) ? null : n;
+}
+
+function classifyStatus(black) {
+  if (!black) return "desconhecido";
+  const s = String(black);
+  if (s.includes("Abaixo")) return "abaixo";
+  if (s.includes("Dentro")) return "media";
+  if (s.includes("Acima da média")) return "acima";
+  if (s.includes("Muito acima")) return "muito_acima";
+  return "desconhecido";
+}
+
+function fmt2(n) {
+  return n !== null ? n.toFixed(2) : "";
+}
+
+/* ============================================================
+   LEITURA CSV
+=============================================================*/
+
+showLoader(true);
+
+Papa.parse(CSV_FILE, {
+  download: true,
+  header: true,
+  skipEmptyLines: true,
+  complete: function (res) {
+    postos = res.data
+      .map(r => {
+        const nome = getCol(r, "Nome EC");
+        const uf = getCol(r, "UF EC");
+        const cidade = getCol(r, "Cidade EC");
+        const log = getCol(r, "Logradouro EC");
+        const merc = getCol(r, "Mercadoria");
+
+        const precoBruto = getCol(r, "Preço por Litro");
+        const desvioBruto = getCol(r, "Desvio de Preço (%)");
+        const blacklist = getCol(r, "Blacklist");
+
+        if (!nome || !uf || !cidade || !log) return null;
+
+        return {
+          nome: nome.trim(),
+          uf: uf.trim(),
+          cidade: cidade.trim(),
+          endereco: log.trim(),
+          mercadoria: merc ? merc.trim() : "",
+          precoNum: parsePreco(precoBruto),
+          desvioNum: parseDesvio(desvioBruto),
+          blacklist: blacklist,
+          status: classifyStatus(blacklist)
+        };
+      })
+      .filter(x => x !== null);
+
+    inicializarFiltros();
+    inicializarMapa();
+    atualizarInterface();
+    showLoader(false);
   }
+});
 
-  function highlight(el) {
-    if (!el) return;
-    el.classList.add("highlight");
-    setTimeout(() => el.classList.remove("highlight"), 400);
-  }
+/* ============================================================
+   FILTROS
+=============================================================*/
 
-  function getCol(row, name) {
-    const key = Object.keys(row).find(k => k.trim() === name);
-    return key ? row[key] : "";
-  }
+function inicializarFiltros() {
+  const ufSel = document.getElementById("filtroUF");
+  const cidSel = document.getElementById("filtroCidade");
+  const mercSel = document.getElementById("filtroMerc");
 
-  function parsePreco(v) {
-    if (!v) return null;
-    let s = String(v).replace(/[R$\s]/g, "");
-    if (s.includes(",") && !s.includes(".")) s = s.replace(",", ".");
-    const n = parseFloat(s);
-    return isNaN(n) ? null : n;
-  }
+  const ufs = [...new Set(postos.map(p => p.uf))].sort();
+  const cidades = [...new Set(postos.map(p => p.cidade))].sort();
+  const mercs = [...new Set(postos.map(p => p.mercadoria))].sort();
 
-  function parseDesvio(v) {
-    if (!v) return null;
-    let s = String(v).replace("%", "");
-    if (s.includes(",") && !s.includes(".")) s = s.replace(",", ".");
-    const n = parseFloat(s);
-    return isNaN(n) ? null : n;
-  }
+  ufs.forEach(u => ufSel.innerHTML += `<option>${u}</option>`);
+  cidades.forEach(c => cidSel.innerHTML += `<option>${c}</option>`);
+  mercs.forEach(m => mercSel.innerHTML += `<option>${m}</option>`);
 
-  function fmt2(n) {
-    return n != null ? n.toFixed(2) : "";
-  }
+  ufSel.onchange =
+  cidSel.onchange =
+  mercSel.onchange =
+  document.getElementById("filtroNome").oninput =
+  document.getElementById("filtroEndereco").oninput =
+    () => {
+      destacarCard("#cardLista");
+      destacarCard("#cardTabela");
+      atualizarInterface();
+    };
+}
 
-  function classificarStatus(s) {
-    if (!s) return "desconhecido";
-    if (s.includes("Abaixo")) return "abaixo";
-    if (s.includes("Dentro") || s.includes("Média")) return "media";
-    if (s.includes("Muito acima")) return "muito_acima";
-    if (s.includes("Acima")) return "acima";
-    return "desconhecido";
-  }
+function destacarCard(id) {
+  const el = document.querySelector(id);
+  el.classList.remove("highlight");
+  void el.offsetWidth;
+  el.classList.add("highlight");
+}
 
-  // ====================== LER CSV ======================
-  showLoader(true);
+function filtrar() {
+  const uf = document.getElementById("filtroUF").value;
+  const cid = document.getElementById("filtroCidade").value;
+  const merc = document.getElementById("filtroMerc").value;
+  const nome = document.getElementById("filtroNome").value.toLowerCase();
+  const end = document.getElementById("filtroEndereco").value.toLowerCase();
 
-  Papa.parse(CSV_FILE, {
-    download: true,
-    header: true,
-    skipEmptyLines: true,
-    complete: results => {
-      postos = results.data
-        .map(row => {
-          const nome = getCol(row, "Nome EC");
-          const uf = getCol(row, "UF EC");
-          const cidade = getCol(row, "Cidade EC");
-          const endereco = getCol(row, "Logradouro EC");
-          const mercadoria = getCol(row, "Mercadoria");
-          const precoBruto = getCol(row, "Preço por Litro");
-          const desvioBruto = getCol(row, "Desvio de Preço (%)");
-          const blacklist = getCol(row, "Blacklist");
+  return postos.filter(p =>
+    (!uf || p.uf === uf) &&
+    (!cid || p.cidade === cid) &&
+    (!merc || p.mercadoria === merc) &&
+    (!nome || p.nome.toLowerCase().includes(nome)) &&
+    (!end || p.endereco.toLowerCase().includes(end))
+  );
+}
 
-          if (!nome || !uf || !cidade || !endereco) return null;
+/* ============================================================
+   MAPA
+=============================================================*/
 
-          return {
-            nome: nome.trim(),
-            uf: uf.trim(),
-            cidade: cidade.trim(),
-            endereco: endereco.trim(),
-            mercadoria: mercadoria ? mercadoria.trim() : "",
-            precoNum: parsePreco(precoBruto),
-            desvioNum: parseDesvio(desvioBruto),
-            status: classificarStatus(blacklist),
-            blacklist
-          };
-        })
-        .filter(x => x);
+function inicializarMapa() {
+  map = L.map("map").setView([-15.7, -47.9], 4);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
+  markersLayer = L.layerGroup().addTo(map);
+}
 
-      inicializarMapa();
-      inicializarFiltros();
-      atualizarContadorBlacklist();
+async function geocode(p) {
+  const key = `${p.endereco}, ${p.cidade} - ${p.uf}`;
+  if (geocodeCache[key]) return geocodeCache[key];
 
-      atualizarInterface().then(() => showLoader(false));
-    },
-    error: err => {
-      console.error("Erro ao ler CSV:", err);
-      showLoader(false);
+  const q = encodeURIComponent(key);
+  const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${q}`;
+
+  try {
+    const r = await fetch(url);
+    const j = await r.json();
+    if (j.length > 0) {
+      const c = { lat: parseFloat(j[0].lat), lon: parseFloat(j[0].lon) };
+      geocodeCache[key] = c;
+      saveCache();
+      return c;
     }
-  });
+  } catch (e) {}
 
-  // ==================== CONTADOR BLACKLIST ====================
-  function atualizarContadorBlacklist() {
-    const cont = { abaixo: 0, media: 0, acima: 0, muito_acima: 0 };
+  return null;
+}
 
-    postos.forEach(p => {
-      if (cont[p.status] !== undefined) cont[p.status]++;
-    });
+async function atualizarMapa(lista) {
+  markersLayer.clearLayers();
+  
+  const abaixo = lista.filter(p => p.status === "abaixo");
 
-    document.getElementById("sAbaixo").textContent = cont.abaixo;
-    document.getElementById("sMedia").textContent = cont.media;
-    document.getElementById("sAcima").textContent = cont.acima;
-    document.getElementById("sMuit").textContent = cont.muito_acima;
+  const limitados = abaixo.slice(0, 50); // Performance!!
+
+  let bounds = [];
+
+  for (const p of limitados) {
+    const c = await geocode(p);
+    if (!c) continue;
+
+    const m = L.circleMarker([c.lat, c.lon], {
+      radius: 7,
+      fillColor: "#22c55e",
+      color: "#166534",
+      weight: 2,
+      fillOpacity: 0.9
+    }).addTo(markersLayer);
+
+    m.bindPopup(`
+      <strong>${p.nome}</strong><br>
+      ${p.endereco}<br>
+      ${p.cidade} - ${p.uf}<br>
+      ${p.desvioNum !== null ? "Desvio: " + fmt2(p.desvioNum) + "%" : ""}
+      <br>
+      ${p.precoNum !== null ? "Preço: R$ " + fmt2(p.precoNum) : ""}
+    `);
+
+    p._marker = m; // Referência para clique na tabela
+    bounds.push([c.lat, c.lon]);
   }
 
-  // ==================== FILTROS ====================
-
-  function inicializarFiltros() {
-    const ufSelect = document.getElementById("filtroUF");
-    const cidadeSelect = document.getElementById("filtroCidade");
-    const mercSelect = document.getElementById("filtroMerc");
-    const nomeInput = document.getElementById("filtroNome");
-    const endInput = document.getElementById("filtroEndereco");
-
-    const ufs = [...new Set(postos.map(p => p.uf))].sort();
-    ufs.forEach(uf => {
-      const opt = document.createElement("option");
-      opt.value = uf;
-      opt.textContent = uf;
-      ufSelect.appendChild(opt);
-    });
-
-    const mercadorias = [...new Set(
-      postos.map(p => (p.mercadoria || "").trim()).filter(v => v)
-    )].sort();
-
-    mercadorias.forEach(m => {
-      const opt = document.createElement("option");
-      opt.value = m;
-      opt.textContent = m;
-      mercSelect.appendChild(opt);
-    });
-
-    ufSelect.addEventListener("change", () => {
-      preencherCidades();
-      aplicarFiltrosComRealce();
-    });
-
-    cidadeSelect.addEventListener("change", aplicarFiltrosComRealce);
-    mercSelect.addEventListener("change", aplicarFiltrosComRealce);
-    nomeInput.addEventListener("input", aplicarFiltrosComRealce);
-    endInput.addEventListener("input", aplicarFiltrosComRealce);
-
-    preencherCidades();
+  if (bounds.length > 0) {
+    map.fitBounds(bounds, { padding: [20, 20] });
   }
+}
 
-  function preencherCidades() {
-    const uf = document.getElementById("filtroUF").value;
-    const cidadeSelect = document.getElementById("filtroCidade");
-    cidadeSelect.innerHTML = '<option value="">Todas</option>';
+/* ============================================================
+   LISTA
+=============================================================*/
 
-    const cidades = [...new Set(
-      postos.filter(p => !uf || p.uf === uf).map(p => p.cidade)
-    )].sort();
+function atualizarLista(lista) {
+  const div = document.getElementById("listaPostos");
+  const count = document.getElementById("countLista");
+  div.innerHTML = "";
 
-    cidades.forEach(c => {
-      const opt = document.createElement("option");
-      opt.value = c;
-      opt.textContent = c;
-      cidadeSelect.appendChild(opt);
-    });
-  }
+  const arr = lista.filter(p => p.status === "abaixo" || p.status === "media");
+  count.textContent = arr.length;
 
-  function filtrarPostos() {
-    const uf = document.getElementById("filtroUF").value;
-    const cidade = document.getElementById("filtroCidade").value;
-    const merc = document.getElementById("filtroMerc").value;
-    const nome = document.getElementById("filtroNome").value.toLowerCase();
-    const endereco = document.getElementById("filtroEndereco").value.toLowerCase();
-
-    return postos.filter(p =>
-      (!uf || p.uf === uf) &&
-      (!cidade || p.cidade === cidade) &&
-      (!merc || p.mercadoria === merc) &&
-      (!nome || p.nome.toLowerCase().includes(nome)) &&
-      (!endereco || p.endereco.toLowerCase().includes(endereco))
-    );
-  }
-
-  // ==================== MAPA ====================
-
-  function inicializarMapa() {
-    map = L.map("map").setView([-15.78, -47.93], 4);
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      maxZoom: 18
-    }).addTo(map);
-    markersLayer = L.layerGroup().addTo(map);
-  }
-
-  async function geocodeEndereco(posto) {
-    // Se o endereço não tiver número, usa só a rua
-    let enderecoBusca = posto.endereco || "";
-    if (!/\d/.test(enderecoBusca)) {
-      enderecoBusca = enderecoBusca.split(",")[0];
-    }
-
-    const chave = `${enderecoBusca}, ${posto.cidade} - ${posto.uf}`;
-
-    if (geocodeCache[chave]) {
-      return geocodeCache[chave];
-    }
-
-    try {
-      const resp = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(chave)}`
-      );
-      const data = await resp.json();
-
-      if (data && data.length > 0) {
-        const lat = parseFloat(data[0].lat);
-        const lon = parseFloat(data[0].lon);
-        const coord = { lat, lon };
-        geocodeCache[chave] = coord;
-        return coord;
-      }
-    } catch (e) {
-      console.error("Erro no geocode:", e);
-    }
-
-    return null;
-  }
-
-  async function atualizarMapa(lista) {
-    markersLayer.clearLayers();
-
-    const abaixo = lista.filter(p => p.status === "abaixo");
-    if (abaixo.length === 0) return;
-
-    const bounds = [];
-
-    // Limita para não ficar pesado
-    const limitados = abaixo.slice(0, 40);
-
-    for (const posto of limitados) {
-      const coord = await geocodeEndereco(posto);
-      if (!coord) continue;
-
-      const marker = L.circleMarker([coord.lat, coord.lon], {
-        radius: 7,
-        fillColor: "#22c55e",
-        color: "#14532d",
-        weight: 2,
-        fillOpacity: 0.9,
-      }).addTo(markersLayer);
-
-      marker.bindPopup(`
-        <strong>${posto.nome}</strong><br>
-        ${posto.endereco}<br>
-        ${posto.cidade} - ${posto.uf}<br>
-        ${posto.desvioNum != null ? `Desvio: ${fmt2(posto.desvioNum)}%<br>` : ""}
-        ${posto.precoNum != null ? `Preço: R$ ${fmt2(posto.precoNum)}` : ""}
-      `);
-
-      bounds.push([coord.lat, coord.lon]);
-    }
-
-    if (bounds.length > 0) {
-      map.fitBounds(bounds, { padding: [30, 30] });
-    }
-  }
-
-  // ==================== LISTA ====================
-
-  function atualizarLista(lista) {
-    const container = document.getElementById("listaPostos");
-    container.innerHTML = "";
-
-    const filtrados = lista.filter(
-      p => p.status === "abaixo" || p.status === "media"
-    );
-
-    document.getElementById("countLista").textContent = filtrados.length;
-
-    filtrados.forEach(p => {
-      const div = document.createElement("div");
-      div.className = "posto-item";
-
-      div.innerHTML = `
+  arr.forEach(p => {
+    div.innerHTML += `
+      <div class="posto-item">
         <div class="posto-nome">${p.nome}</div>
         <div class="posto-det">${p.endereco}</div>
         <div class="posto-det">${p.cidade} / ${p.uf}</div>
-        ${p.desvioNum != null ? `<div class="posto-det">Desvio: ${fmt2(p.desvioNum)}%</div>` : ""}
-        ${p.precoNum != null ? `<div class="posto-det">Preço: R$ ${fmt2(p.precoNum)}</div>` : ""}
-      `;
+        ${p.precoNum ? `<div class="posto-det">Preço: R$ ${fmt2(p.precoNum)}</div>` : ""}
+      </div>
+    `;
+  });
+}
 
-      container.appendChild(div);
-    });
-  }
+/* ============================================================
+   TABELA TOP 10
+=============================================================*/
 
-  // ==================== TABELA ====================
+function atualizarTabela(lista) {
+  const tbody = document.getElementById("tabelaAcima");
+  const count = document.getElementById("countTabela");
 
-  function atualizarTabela(lista) {
-    const tbody = document.getElementById("tabelaAcima");
-    tbody.innerHTML = "";
+  const criticos = lista.filter(p => p.status === "acima" || p.status === "muito_acima");
 
-    const filtrados = lista.filter(
-      p => p.status === "acima" || p.status === "muito_acima"
-    );
+  const ordenado = criticos
+    .filter(p => p.precoNum !== null)
+    .sort((a, b) => a.precoNum - b.precoNum)
+    .slice(0, 10);
 
-    document.getElementById("countTabela").textContent = filtrados.length;
+  count.textContent = ordenado.length;
+  tbody.innerHTML = "";
 
-    filtrados.sort((a, b) => (b.desvioNum || 0) - (a.desvioNum || 0));
+  ordenado.forEach(p => {
+    const tr = document.createElement("tr");
+    tr.classList.add("linhaPosto");
 
-    filtrados.forEach(p => {
-      const tr = document.createElement("tr");
+    const badge =
+      p.status === "muito_acima"
+        ? '<span class="badge badge-muito">Muito acima</span>'
+        : '<span class="badge badge-acima">Acima</span>';
 
-      tr.innerHTML = `
-        <td>${p.nome}</td>
-        <td>${p.cidade}/${p.uf}</td>
-        <td>${p.desvioNum != null ? fmt2(p.desvioNum) + "%" : ""}</td>
-        <td>${p.precoNum != null ? "R$ " + fmt2(p.precoNum) : ""}</td>
-        <td>${p.status.replace("_", " ")}</td>
-      `;
+    tr.innerHTML = `
+      <td>${p.nome}</td>
+      <td>${p.cidade} / ${p.uf}</td>
+      <td>${fmt2(p.desvioNum)}%</td>
+      <td>R$ ${fmt2(p.precoNum)}</td>
+      <td>${badge}</td>
+    `;
 
-      tbody.appendChild(tr);
-    });
-  }
+    tr.onclick = () => {
+      if (p._marker) {
+        map.setView(p._marker.getLatLng(), 16);
+        p._marker.openPopup();
+      }
+      destacarCard("#cardTabela");
+    };
 
-  // ==================== ATUALIZAÇÃO GERAL ====================
+    tbody.appendChild(tr);
+  });
+}
 
-  async function atualizarInterface() {
-    showLoader(true);
-    const filtrados = filtrarPostos();
-    atualizarLista(filtrados);
-    atualizarTabela(filtrados);
-    await atualizarMapa(filtrados);
-    showLoader(false);
-  }
+/* ============================================================
+   CONTADOR LATERAL
+=============================================================*/
 
-  async function aplicarFiltrosComRealce() {
-    await atualizarInterface();
-    highlight(cardLista);
-    highlight(cardTabela);
-  }
-</script>
+function atualizarStats(lista) {
+  document.getElementById("sAbaixo").textContent = lista.filter(p => p.status === "abaixo").length;
+  document.getElementById("sMedia").textContent = lista.filter(p => p.status === "media").length;
+  document.getElementById("sAcima").textContent = lista.filter(p => p.status === "acima").length;
+  document.getElementById("sMuit").textContent = lista.filter(p => p.status === "muito_acima").length;
+}
 
-</body>
-</html>
+/* ============================================================
+   ATUALIZA GERAL
+=============================================================*/
+
+async function atualizarInterface() {
+  const lista = filtrar();
+
+  atualizarStats(lista);
+  atualizarLista(lista);
+  atualizarTabela(lista);
+  await atualizarMapa(lista);
+}
+
+  
