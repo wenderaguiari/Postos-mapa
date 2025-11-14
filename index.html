@@ -399,69 +399,77 @@
 
       markersLayer = L.layerGroup().addTo(map);
     }
-// Cache de coordenadas para evitar repetição de requisições
-const geocodeCache = {};
+
+    // Cache de coordenadas
+    const geocodeCache = {};
 
     async function atualizarMapa(lista) {
-  markersLayer.clearLayers();
+      markersLayer.clearLayers();
 
-  const abaixo = lista
-    .filter(p => p.status === "abaixo" || p.status === "media")
-    .sort((a, b) => a.precoNum - b.precoNum)
-    .slice(0, 10);
+      const abaixo = lista
+        .filter(p => p.status === "abaixo" || p.status === "media")
+        .sort((a, b) => a.precoNum - b.precoNum)
+        .slice(0, 10);
 
-  for (const p of abaixo) {
-    const q = `${p.endereco}, ${p.cidade} - ${p.uf}`;
+      for (const p of abaixo) {
 
-    // SE O ENDEREÇO JÁ FOI GEOCODIFICADO → NÃO BUSCA DE NOVO
-    if (!geocodeCache[q]) {
-      const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(q)}`;
+        /* ----------------------------
+           ALTERAÇÃO 1 — Leitura Cidade + UF
+        -----------------------------*/
+        const q = `${p.endereco}, ${p.cidade}, ${p.uf}, Brasil`;
 
-      try {
-        const r = await fetch(url);
-        const d = await r.json();
-        if (!d.length) continue;
+        if (!geocodeCache[q]) {
+          const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(q)}`;
 
-        geocodeCache[q] = [parseFloat(d[0].lat), parseFloat(d[0].lon)];
+          try {
+            const r = await fetch(url);
+            const d = await r.json();
+            if (!d.length) continue;
 
-      } catch (e) {
-        console.error("Erro ao geocodificar:", q);
-        continue;
+            geocodeCache[q] = [parseFloat(d[0].lat), parseFloat(d[0].lon)];
+
+          } catch (e) {
+            console.error("Erro ao geocodificar:", q);
+            continue;
+          }
+        }
+
+        const [lat, lon] = geocodeCache[q];
+
+        const m = L.circleMarker([lat, lon], {
+          radius: 6,
+          fillColor: "#22c55e",
+          color: "#14532d",
+          weight: 2,
+          fillOpacity: 0.9
+        }).addTo(markersLayer);
+
+        m.bindPopup(
+          `<strong>${p.nome}</strong><br>${p.endereco}<br>${p.cidade} - ${p.uf}<br>R$ ${fmt2(p.precoNum)}`
+        );
+
+        p._marker = m;
+      }
+
+      /* ----------------------------
+         ALTERAÇÃO 2 — Zoom automático
+      -----------------------------*/
+      if (markersLayer.getLayers().length > 0) {
+        map.fitBounds(markersLayer.getBounds(), { padding: [30, 30] });
       }
     }
-
-    const [lat, lon] = geocodeCache[q];
-
-    const m = L.circleMarker([lat, lon], {
-      radius: 6,
-      fillColor: "#22c55e",
-      color: "#14532d",
-      weight: 2,
-      fillOpacity: 0.9
-    }).addTo(markersLayer);
-
-    m.bindPopup(
-      `<strong>${p.nome}</strong><br>${p.endereco}<br>${p.cidade} - ${p.uf}<br>R$ ${fmt2(p.precoNum)}`
-    );
-
-    p._marker = m;
-  }
-}
-
 
     // --------- FILTROS ---------
     function inicializarFiltros() {
       const ufSel = document.getElementById("filtroUF");
       const mercSel = document.getElementById("filtroMercadoria");
 
-      // UFs
       [...new Set(postos.map((p) => p.uf))]
         .sort()
         .forEach((u) => {
           ufSel.innerHTML += `<option value="${u}">${u}</option>`;
         });
 
-      // Mercadorias
       [...new Set(postos.map((p) => p.mercadoria))]
         .sort()
         .forEach((m) => {
@@ -589,7 +597,6 @@ const geocodeCache = {};
       });
     }
 
-    // INICIAR
     carregarXLSX();
   </script>
 </body>
