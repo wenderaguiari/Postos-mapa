@@ -130,7 +130,10 @@
       z-index:999;
     }
 
-    @keyframes spin { 0%{transform:translate(-50%,-50%) rotate(0deg);} 100%{transform:translate(-50%,-50%) rotate(360deg);} }
+    @keyframes spin {
+      0%{transform:translate(-50%,-50%) rotate(0deg);} 
+      100%{transform:translate(-50%,-50%) rotate(360deg);} 
+    }
   </style>
 </head>
 
@@ -154,7 +157,6 @@
 
 <!-- PAINEL CENTRAL -->
 <main class="main-panel">
-
   <section>
     <h2>Filtros</h2>
     <small>Use os filtros para localizar rapidamente os postos.</small>
@@ -209,204 +211,4 @@
 <!-- MAPA -->
 <section class="map-panel">
   <h3>Mapa – Postos abaixo da média</h3>
-  <small>Somente os 10 mais baratos aparecem no mapa.</small>
-  <div id="map"></div>
-</section>
-
-<script>
-  const XLSX_FILE = "mapa-postos.xlsx";
-  let postos = [];
-  let map, markersLayer;
-
-  function showLoader(v){ document.getElementById("loader").style.display = v ? "block" : "none"; }
-
-  function parsePreco(v){ if(!v) return null; v = String(v).replace(",","."); return parseFloat(v); }
-  function parseDesvio(v){ if(!v) return null; v = String(v).replace(",","."); return parseFloat(v); }
-  function fmt2(n){ return n ? n.toFixed(2) : ""; }
-
-  function classificarStatus(txt){
-    if(!txt) return "desconhecido";
-    const s = String(txt);
-    if(s.includes("Abaixo")) return "abaixo";
-    if(s.includes("Dentro")) return "media";
-    if(s.includes("Muito")) return "muito_acima";
-    if(s.includes("Acima")) return "acima";
-    return "desconhecido";
-  }
-
-  // --------- CARREGAR XLSX ---------
-  async function carregarXLSX(){
-    showLoader(true);
-
-    const resp = await fetch(XLSX_FILE);
-    const blob = await resp.blob();
-    const data = await blob.arrayBuffer();
-
-    const workbook = XLSX.read(data, { type:"array" });
-    const sheet = workbook.Sheets[workbook.SheetNames[0]];
-    const json = XLSX.utils.sheet_to_json(sheet, { defval:"" });
-
-    postos = json.map(row => ({
-      nome: row["Nome EC"],
-      uf: row["UF EC"],
-      cidade: row["Cidade EC"],
-      endereco: row["Logradouro EC"],
-      mercadoria: row["Mercadoria"],
-      precoNum: parsePreco(row["Preço por Litro"]),
-      desvioNum: parseDesvio(row["Desvio de Preço (%)"]),
-      blacklist: row["Blacklist"],
-      status: classificarStatus(row["Blacklist"]),
-      _marker: null
-    }));
-
-    inicializarMapa();
-    inicializarFiltros();
-    atualizarInterface();
-    showLoader(false);
-  }
-
-  // --------- MAPA ---------
-  function inicializarMapa(){
-    map = L.map("map").setView([-14.5,-51.5],4);
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
-    markersLayer = L.layerGroup().addTo(map);
-  }
-
-  async function atualizarMapa(lista){
-    markersLayer.clearLayers();
-    const abaixo = lista.filter(p => p.status==="abaixo" || p.status==="media")
-                       .sort((a,b)=>a.precoNum-b.precoNum)
-                       .slice(0,10);
-
-    for(const p of abaixo){
-      const q = `${p.endereco}, ${p.cidade} - ${p.uf}`;
-      const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(q)}`;
-      const r = await fetch(url); const d = await r.json();
-      if(!d.length) continue;
-
-      const m = L.circleMarker([d[0].lat, d[0].lon], {
-        radius: 6,
-        fillColor:"#22c55e",
-        color:"#14532d",
-        weight:2,
-        fillOpacity:0.9
-      }).addTo(markersLayer);
-
-      m.bindPopup(`<strong>${p.nome}</strong><br>${p.endereco}<br>${p.cidade} - ${p.uf}<br>R$ ${fmt2(p.precoNum)}`);
-      p._marker = m;
-    }
-  }
-
-  // --------- FILTROS ---------
-  function inicializarFiltros(){
-    const ufSel = document.getElementById("filtroUF");
-    const cidSel = document.getElementById("filtroCidade");
-    const mercSel = document.getElementById("filtroMercadoria");
-
-    [...new Set(postos.map(p=>p.uf))].sort().forEach(u=>{
-      ufSel.innerHTML += `<option>${u}</option>`;
-    });
-
-    [...new Set(postos.map(p=>p.mercadoria))].sort().forEach(m=>{
-      if(m) mercSel.innerHTML += `<option>${m}</option>`;
-    });
-
-    ufSel.onchange = () => preencherCidades();
-    cidSel.onchange = mercSel.onchange = atualizarInterface;
-    preencherCidades();
-  }
-
-  function preencherCidades(){
-    const uf = document.getElementById("filtroUF").value;
-    const cidSel = document.getElementById("filtroCidade");
-    cidSel.innerHTML = "<option>Todas</option>";
-
-    [...new Set(postos.filter(p=>!uf||p.uf===uf).map(p=>p.cidade))]
-      .sort().forEach(c=>{
-        cidSel.innerHTML += `<option>${c}</option>`;
-      });
-
-    atualizarInterface();
-  }
-
-  // --------- FILTRAR ---------
-  function filtrar(){
-    const uf = filtroUF.value;
-    const cid = filtroCidade.value;
-    const m = filtroMercadoria.value;
-    const nome = filtroNome.value.toLowerCase();
-    const end = filtroEndereco.value.toLowerCase();
-
-    return postos.filter(p =>
-      (!uf || p.uf===uf) &&
-      (!cid || p.cidade===cid) &&
-      (!m || p.mercadoria===m) &&
-      (!nome || p.nome.toLowerCase().includes(nome)) &&
-      (!end || p.endereco.toLowerCase().includes(end))
-    );
-  }
-
-  // --------- UI ---------
-  function atualizarInterface(){
-    const list = filtrar();
-    atualizarStats(list);
-    atualizarLista(list);
-    atualizarTabela(list);
-    atualizarMapa(list);
-  }
-
-  function atualizarStats(list){
-    statsAbaixo.textContent = list.filter(p=>p.status==="abaixo").length;
-    statsMedia.textContent  = list.filter(p=>p.status==="media").length;
-    statsAcima.textContent  = list.filter(p=>p.status==="acima").length;
-    statsMuito.textContent  = list.filter(p=>p.status==="muito_acima").length;
-  }
-
-  function atualizarLista(list){
-    const div = listaPostos;
-    div.innerHTML = "";
-
-    const top = list
-      .filter(p=>p.status==="abaixo" || p.status==="media")
-      .sort((a,b)=>a.precoNum-b.precoNum)
-      .slice(0,10);
-
-    countLista.textContent = `(${top.length})`;
-
-    top.forEach(p=>{
-      div.innerHTML += `
-        <div class="posto-item">
-          <div><strong>${p.nome}</strong></div>
-          <div>${p.cidade} - ${p.uf}</div>
-          <div>R$ ${fmt2(p.precoNum)} • ${fmt2(p.desvioNum)}%</div>
-        </div>`;
-    });
-  }
-
-  function atualizarTabela(list){
-    const tbody = tabelaAcima;
-    tbody.innerHTML = "";
-
-    const crit = list.filter(p=>p.status==="acima" || p.status==="muito_acima")
-                     .sort((a,b)=>b.desvioNum-a.desvioNum);
-
-    countTabela.textContent = `(${crit.length})`;
-
-    crit.forEach(p=>{
-      tbody.innerHTML += `
-        <tr>
-          <td>${p.nome}</td>
-          <td>${p.cidade} / ${p.uf}</td>
-          <td>${fmt2(p.desvioNum)}%</td>
-          <td>R$ ${fmt2(p.precoNum)}</td>
-          <td>${p.status}</td>
-        </tr>`;
-    });
-  }
-
-  // INICIAR
-  carregarXLSX();
-</script>
-
-</body>
-</html>
+  <small>Somente os 
