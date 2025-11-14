@@ -4,93 +4,228 @@
   <meta charset="UTF-8" />
   <title>Painel de Postos - Alloha Fibra</title>
 
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <!-- Leaflet -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
+  <!-- SheetJS para XLSX -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
   <style>
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+    }
+
     body {
-      margin: 0; font-family: system-ui; font-size: 14px;
-      background: #f3f6fb; color: #001059;
-      display: flex; height: 100vh; overflow: hidden;
-    }
-    .sidebar {
-      width: 240px; background: #001059; color: #f9fafb;
-      padding: 14px 16px; display: flex; flex-direction: column; gap: 10px;
-      box-shadow: 4px 0 10px rgba(0,0,0,0.25);
-    }
-    .sidebar-logo img { max-width: 140px; display: block; margin: 0 auto 6px; }
-    .sidebar-title-main { font-size: 16px; font-weight: 600; }
-    .sidebar-title-sub { font-size: 12px; opacity: .9; margin-bottom: 4px; }
-    .tag {
-      display: inline-block; font-size: 11px; padding: 2px 8px;
-      border-radius: 999px; border: 1px solid #48ef6c;
-      color: #48ef6c; background: rgba(72,239,108,.15);
-    }
-    #statsBox { margin-top: 8px; font-size: 12px; }
-    #statsBox span { font-weight: 600; }
-    .main-panel {
-      width: 420px; background: #fff; padding: 10px 14px;
-      border-right: 2px solid #001059; display: flex; flex-direction: column;
-      gap: 8px; overflow-y: auto;
-    }
-    h2 { margin: 0 0 4px; font-size: 16px; }
-    small { font-size: 12px; color: #6b7280; }
-    label {
-      font-size: 12px; font-weight: 600; margin: 6px 0 2px; display: block;
-    }
-    select, input[type="text"] {
-      width: 100%; padding: 6px 9px; border-radius: 999px;
-      border: 2px solid #001059; background: #f9fafb; font-size: 13px;
-    }
-    select:focus, input:focus {
-      border-color: #48ef6c; background: #fff;
-      box-shadow: 0 0 0 2px rgba(72,239,108,.25);
-    }
-    .section-card {
-      margin-top: 8px; background: #f9fafb; border-radius: 10px;
-      border: 1px solid #e5e7eb; padding: 8px; font-size: 13px;
-    }
-    .section-title {
-      display: flex; align-items: center; gap: 4px; margin-bottom: 4px; font-weight: 600;
-    }
-    .section-count { font-size: 12px; color: #6b7280; }
-    .badge {
-      padding: 2px 6px; border-radius: 999px; font-size: 10px; font-weight: 700;
-    }
-    .badge-abaixo { background: #dcfce7; color: #166534; }
-    .badge-media { background: #dbeafe; color: #1d4ed8; }
-    .badge-acima { background: #fef9c3; color: #854d0e; }
-    .badge-muito { background: #fee2e2; color: #b91c1c; }
-    .posto-item {
-      padding: 5px 2px; border-bottom: 1px dashed #e5e7eb; cursor: pointer;
-    }
-    .posto-item:hover { background: #e5ebff; }
-    .map-panel {
-      flex: 1; padding: 10px; display: flex; flex-direction: column; gap: 6px;
-    }
-    #map {
-      flex: 1; border-radius: 12px; border: 2px solid #001059;
+      margin: 0;
+      font-family: system-ui;
+      font-size: 14px;
+      background: #f3f6fb;
+      color: #001059;
+      display: flex;
+      height: 100vh;
       overflow: hidden;
     }
-    .loader {
-      position: fixed; top: 50%; left: 50%; width: 32px; height: 32px;
-      border-radius: 50%; border: 4px solid #e5e7eb; border-top: 4px solid #48ef6c;
-      transform: translate(-50%, -50%); animation: spin 1s linear infinite;
-      display: none; z-index: 999;
+
+    .sidebar {
+      width: 240px;
+      background: #001059;
+      color: #f9fafb;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: 4px 0 10px rgba(0, 0, 0, 0.25);
     }
+
+    .sidebar-logo img {
+      max-width: 140px;
+      display: block;
+      margin: 0 auto 6px;
+    }
+
+    .sidebar-title-main {
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .sidebar-title-sub {
+      font-size: 12px;
+      opacity: 0.9;
+      margin-bottom: 4px;
+    }
+
+    .tag {
+      display: inline-block;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid #48ef6c;
+      color: #48ef6c;
+      background: rgba(72, 239, 108, 0.15);
+    }
+
+    #statsBox {
+      margin-top: 8px;
+      font-size: 12px;
+    }
+
+    #statsBox span {
+      font-weight: 600;
+    }
+
+    .main-panel {
+      width: 420px;
+      background: #fff;
+      padding: 10px 14px;
+      border-right: 2px solid #001059;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      overflow-y: auto;
+    }
+
+    h2 {
+      margin: 0 0 4px;
+      font-size: 16px;
+    }
+
+    small {
+      font-size: 12px;
+      color: #6b7280;
+    }
+
+    label {
+      font-size: 12px;
+      font-weight: 600;
+      margin: 6px 0 2px;
+      display: block;
+    }
+
+    select,
+    input[type="text"] {
+      width: 100%;
+      padding: 6px 9px;
+      border-radius: 999px;
+      border: 2px solid #001059;
+      background: #f9fafb;
+      font-size: 13px;
+    }
+
+    select:focus,
+    input:focus {
+      border-color: #48ef6c;
+      background: #fff;
+      box-shadow: 0 0 0 2px rgba(72, 239, 108, 0.25);
+    }
+
+    .section-card {
+      margin-top: 8px;
+      background: #f9fafb;
+      border-radius: 10px;
+      border: 1px solid #e5e7eb;
+      padding: 8px;
+      font-size: 13px;
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-bottom: 4px;
+      font-weight: 600;
+    }
+
+    .section-count {
+      font-size: 12px;
+      color: #6b7280;
+    }
+
+    .badge {
+      padding: 2px 6px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .badge-abaixo {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .badge-media {
+      background: #dbeafe;
+      color: #1d4ed8;
+    }
+
+    .badge-acima {
+      background: #fef9c3;
+      color: #854d0e;
+    }
+
+    .badge-muito {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+
+    .posto-item {
+      padding: 5px 2px;
+      border-bottom: 1px dashed #e5e7eb;
+      cursor: pointer;
+    }
+
+    .posto-item:hover {
+      background: #e5ebff;
+    }
+
+    .map-panel {
+      flex: 1;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    #map {
+      flex: 1;
+      border-radius: 12px;
+      border: 2px solid #001059;
+      overflow: hidden;
+    }
+
+    .loader {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 4px solid #e5e7eb;
+      border-top: 4px solid #48ef6c;
+      transform: translate(-50%, -50%);
+      animation: spin 1s linear infinite;
+      display: none;
+      z-index: 999;
+    }
+
     @keyframes spin {
-      0% { transform: translate(-50%, -50%) rotate(0deg); }
-      100% { transform: translate(-50%, -50%) rotate(360deg); }
+      0% {
+        transform: translate(-50%, -50%) rotate(0deg);
+      }
+
+      100% {
+        transform: translate(-50%, -50%) rotate(360deg);
+      }
     }
   </style>
 </head>
-
 <body>
   <div class="loader" id="loader"></div>
 
+  <!-- SIDEBAR -->
   <aside class="sidebar">
     <div class="sidebar-logo">
       <img src="Imagem1.png" />
@@ -109,8 +244,8 @@
     </div>
   </aside>
 
+  <!-- PAINEL CENTRAL -->
   <main class="main-panel">
-
     <section>
       <h2>Filtros</h2>
       <small>Use os filtros para localizar rapidamente os postos.</small>
@@ -131,12 +266,21 @@
       </select>
 
       <label>Nome do posto</label>
-      <input type="text" id="filtroNome" placeholder="Digite parte do nome" />
+      <input
+        type="text"
+        id="filtroNome"
+        placeholder="Digite parte do nome"
+      />
 
       <label>Endereço</label>
-      <input type="text" id="filtroEndereco" placeholder="Digite parte do endereço" />
+      <input
+        type="text"
+        id="filtroEndereco"
+        placeholder="Digite parte do endereço"
+      />
     </section>
 
+    <!-- LISTA TOP 10 -->
     <section class="section-card" id="cardLista">
       <div class="section-title">
         <span class="badge badge-abaixo">Abaixo</span>
@@ -147,6 +291,7 @@
       <div id="listaPostos"></div>
     </section>
 
+    <!-- TABELA ACIMA / MUITO ACIMA -->
     <section class="section-card" id="cardTabela">
       <div class="section-title">
         <span class="badge badge-acima">Acima</span>
@@ -170,6 +315,7 @@
     </section>
   </main>
 
+  <!-- MAPA -->
   <section class="map-panel">
     <h3>Mapa – Postos abaixo da média</h3>
     <small>Somente os 10 mais baratos aparecem no mapa.</small>
@@ -212,6 +358,7 @@
       return "desconhecido";
     }
 
+    // --------- CARREGAR XLSX ---------
     async function carregarXLSX() {
       showLoader(true);
 
@@ -242,96 +389,126 @@
       showLoader(false);
     }
 
+    // --------- MAPA ---------
     function inicializarMapa() {
       map = L.map("map").setView([-14.5, -51.5], 4);
 
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png")
-        .addTo(map);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(
+        map
+      );
 
       markersLayer = L.layerGroup().addTo(map);
     }
 
+    // Cache de coordenadas para evitar repetição de requisições
     const geocodeCache = {};
+
+    // Função genérica para geocodificar (endereço, cidade ou UF)
+    async function geocodificar(q) {
+      if (geocodeCache[q]) return geocodeCache[q];
+
+      const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(
+        q
+      )}`;
+
+      try {
+        const r = await fetch(url);
+        const d = await r.json();
+        if (!d.length) return null;
+
+        const coords = [parseFloat(d[0].lat), parseFloat(d[0].lon)];
+        geocodeCache[q] = coords;
+        return coords;
+      } catch (e) {
+        console.error("Erro ao geocodificar:", q, e);
+        return null;
+      }
+    }
 
     async function atualizarMapa(lista) {
       markersLayer.clearLayers();
 
       const abaixo = lista
-        .filter(p => p.status === "abaixo" || p.status === "media")
+        .filter((p) => p.status === "abaixo" || p.status === "media")
         .sort((a, b) => a.precoNum - b.precoNum)
         .slice(0, 10);
 
+      // 1) Adiciona marcadores normalmente (10 mais baratos)
       for (const p of abaixo) {
+        const qPosto = `${p.endereco}, ${p.cidade}, ${p.uf}, Brasil`;
+        const coordsPosto = await geocodificar(qPosto);
+        if (!coordsPosto) continue;
 
-        const qEndereco = `${p.endereco}, ${p.cidade}, ${p.uf}, Brasil`;
-        const qCidade = `${p.cidade}, ${p.uf}, Brasil`;
-        const qEstado = `${p.uf}, Brasil`;
-
-        async function obterCoordenadas(q) {
-          const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(q)}`;
-          try {
-            const r = await fetch(url);
-            const d = await r.json();
-            if (d.length) {
-              return [parseFloat(d[0].lat), parseFloat(d[0].lon)];
-            }
-          } catch (e) {}
-          return null;
-        }
-
-        if (!geocodeCache[qEndereco]) {
-          let coords = await obterCoordenadas(qEndereco);
-
-          if (!coords) coords = await obterCoordenadas(qCidade);
-
-          if (!coords) coords = await obterCoordenadas(qEstado);
-
-          if (!coords) continue;
-
-          geocodeCache[qEndereco] = coords;
-        }
-
-        const [lat, lon] = geocodeCache[qEndereco];
+        const [lat, lon] = coordsPosto;
 
         const m = L.circleMarker([lat, lon], {
           radius: 6,
           fillColor: "#22c55e",
           color: "#14532d",
           weight: 2,
-          fillOpacity: 0.9
+          fillOpacity: 0.9,
         }).addTo(markersLayer);
 
         m.bindPopup(
-          `<strong>${p.nome}</strong><br>${p.endereco}<br>${p.cidade} - ${p.uf}<br>R$ ${fmt2(p.precoNum)}`
+          `<strong>${p.nome}</strong><br>${p.endereco}<br>${p.cidade} - ${p.uf}<br>R$ ${fmt2(
+            p.precoNum
+          )}`
         );
 
         p._marker = m;
       }
 
+      // 2) CONTROLE DE ZOOM BASEADO EM UF / CIDADE (INDEPENDENTE DOS MARCADORES)
+      const uf = document.getElementById("filtroUF").value;
+      const cid = document.getElementById("filtroCidade").value;
       const pontos = markersLayer.getLayers();
 
+      // Caso 1: Cidade + UF selecionados → centraliza na cidade
+      if (cid && uf) {
+        const qCidade = `${cid}, ${uf}, Brasil`;
+        const coordsCidade = await geocodificar(qCidade);
+
+        if (coordsCidade) {
+          map.setView([coordsCidade[0], coordsCidade[1]], 12);
+          return;
+        }
+      }
+
+      // Caso 2: só UF selecionada → centraliza na UF
+      if (!cid && uf) {
+        const qUF = `${uf}, Brasil`;
+        const coordsUF = await geocodificar(qUF);
+
+        if (coordsUF) {
+          map.setView([coordsUF[0], coordsUF[1]], 6);
+          return;
+        }
+      }
+
+      // Caso 3: sem UF/cidade → usa os marcadores (se existirem) ou Brasil
       if (pontos.length === 1) {
         const c = pontos[0].getLatLng();
         map.setView([c.lat, c.lng], 12);
-      }
-      else if (pontos.length > 1) {
+      } else if (pontos.length > 1) {
         map.fitBounds(markersLayer.getBounds(), { padding: [30, 30] });
-      }
-      else {
+      } else {
         map.setView([-14.5, -51.5], 4);
       }
     }
 
+    // --------- FILTROS ---------
     function inicializarFiltros() {
       const ufSel = document.getElementById("filtroUF");
       const mercSel = document.getElementById("filtroMercadoria");
 
+      // UFs
       [...new Set(postos.map((p) => p.uf))]
         .sort()
         .forEach((u) => {
           ufSel.innerHTML += `<option value="${u}">${u}</option>`;
         });
 
+      // Mercadorias
       [...new Set(postos.map((p) => p.mercadoria))]
         .sort()
         .forEach((m) => {
@@ -363,12 +540,15 @@
       atualizarInterface();
     }
 
+    // --------- FILTRAR ---------
     function filtrar() {
       const uf = document.getElementById("filtroUF").value;
       const cid = document.getElementById("filtroCidade").value;
       const m = document.getElementById("filtroMercadoria").value;
       const nome = document.getElementById("filtroNome").value.toLowerCase();
-      const end = document.getElementById("filtroEndereco").value.toLowerCase();
+      const end = document
+        .getElementById("filtroEndereco")
+        .value.toLowerCase();
 
       return postos.filter(
         (p) =>
@@ -380,6 +560,7 @@
       );
     }
 
+    // --------- UI ---------
     function atualizarInterface() {
       const list = filtrar();
       atualizarStats(list);
@@ -415,7 +596,9 @@
         .sort((a, b) => a.precoNum - b.precoNum)
         .slice(0, 10);
 
-      document.getElementById("countLista").textContent = `(${top.length})`;
+      document.getElementById(
+        "countLista"
+      ).textContent = `(${top.length})`;
 
       top.forEach((p) => {
         div.innerHTML += `
@@ -436,7 +619,9 @@
         .filter((p) => p.status === "acima" || p.status === "muito_acima")
         .sort((a, b) => b.desvioNum - a.desvioNum);
 
-      document.getElementById("countTabela").textContent = `(${crit.length})`;
+      document.getElementById(
+        "countTabela"
+      ).textContent = `(${crit.length})`;
 
       crit.forEach((p) => {
         tbody.innerHTML += `
@@ -451,6 +636,7 @@
       });
     }
 
+    // INICIAR
     carregarXLSX();
   </script>
 </body>
