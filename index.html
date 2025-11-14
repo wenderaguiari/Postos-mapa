@@ -4,14 +4,9 @@
   <meta charset="UTF-8" />
   <title>Painel de Postos - Alloha Fibra</title>
 
-  <!-- Leaflet -->
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-  />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-  <!-- SheetJS para XLSX -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
   <style>
@@ -96,7 +91,6 @@
 <body>
   <div class="loader" id="loader"></div>
 
-  <!-- SIDEBAR -->
   <aside class="sidebar">
     <div class="sidebar-logo">
       <img src="Imagem1.png" />
@@ -115,8 +109,8 @@
     </div>
   </aside>
 
-  <!-- PAINEL CENTRAL -->
   <main class="main-panel">
+
     <section>
       <h2>Filtros</h2>
       <small>Use os filtros para localizar rapidamente os postos.</small>
@@ -258,6 +252,7 @@
     }
 
     const geocodeCache = {};
+
     async function atualizarMapa(lista) {
       markersLayer.clearLayers();
 
@@ -313,14 +308,16 @@
         p._marker = m;
       }
 
-      const filteredUF = document.getElementById("filtroUF").value;
-      const filteredCID = document.getElementById("filtroCidade").value;
+      const pontos = markersLayer.getLayers();
 
-      if (markersLayer.getLayers().length > 0) {
-        try {
-          map.fitBounds(markersLayer.getBounds(), { padding: [30, 30] });
-        } catch (e) {}
-      } else {
+      if (pontos.length === 1) {
+        const c = pontos[0].getLatLng();
+        map.setView([c.lat, c.lng], 12);
+      }
+      else if (pontos.length > 1) {
+        map.fitBounds(markersLayer.getBounds(), { padding: [30, 30] });
+      }
+      else {
         map.setView([-14.5, -51.5], 4);
       }
     }
