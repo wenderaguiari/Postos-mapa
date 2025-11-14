@@ -399,42 +399,55 @@
 
       markersLayer = L.layerGroup().addTo(map);
     }
+// Cache de coordenadas para evitar repetição de requisições
+const geocodeCache = {};
 
     async function atualizarMapa(lista) {
-      markersLayer.clearLayers();
+  markersLayer.clearLayers();
 
-      const abaixo = lista
-        .filter((p) => p.status === "abaixo" || p.status === "media")
-        .sort((a, b) => a.precoNum - b.precoNum)
-        .slice(0, 10);
+  const abaixo = lista
+    .filter(p => p.status === "abaixo" || p.status === "media")
+    .sort((a, b) => a.precoNum - b.precoNum)
+    .slice(0, 10);
 
-      for (const p of abaixo) {
-        const q = `${p.endereco}, ${p.cidade} - ${p.uf}`;
-        const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(
-          q
-        )}`;
+  for (const p of abaixo) {
+    const q = `${p.endereco}, ${p.cidade} - ${p.uf}`;
 
+    // SE O ENDEREÇO JÁ FOI GEOCODIFICADO → NÃO BUSCA DE NOVO
+    if (!geocodeCache[q]) {
+      const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(q)}`;
+
+      try {
         const r = await fetch(url);
         const d = await r.json();
         if (!d.length) continue;
 
-        const m = L.circleMarker([d[0].lat, d[0].lon], {
-          radius: 6,
-          fillColor: "#22c55e",
-          color: "#14532d",
-          weight: 2,
-          fillOpacity: 0.9,
-        }).addTo(markersLayer);
+        geocodeCache[q] = [parseFloat(d[0].lat), parseFloat(d[0].lon)];
 
-        m.bindPopup(
-          `<strong>${p.nome}</strong><br>${p.endereco}<br>${p.cidade} - ${p.uf}<br>R$ ${fmt2(
-            p.precoNum
-          )}`
-        );
-
-        p._marker = m;
+      } catch (e) {
+        console.error("Erro ao geocodificar:", q);
+        continue;
       }
     }
+
+    const [lat, lon] = geocodeCache[q];
+
+    const m = L.circleMarker([lat, lon], {
+      radius: 6,
+      fillColor: "#22c55e",
+      color: "#14532d",
+      weight: 2,
+      fillOpacity: 0.9
+    }).addTo(markersLayer);
+
+    m.bindPopup(
+      `<strong>${p.nome}</strong><br>${p.endereco}<br>${p.cidade} - ${p.uf}<br>R$ ${fmt2(p.precoNum)}`
+    );
+
+    p._marker = m;
+  }
+}
+
 
     // --------- FILTROS ---------
     function inicializarFiltros() {
