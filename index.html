@@ -15,213 +15,84 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
   <style>
-    * {
-      box-sizing: border-box;
-    }
-
+    * { box-sizing: border-box; }
     body {
-      margin: 0;
-      font-family: system-ui;
-      font-size: 14px;
-      background: #f3f6fb;
-      color: #001059;
-      display: flex;
-      height: 100vh;
-      overflow: hidden;
+      margin: 0; font-family: system-ui; font-size: 14px;
+      background: #f3f6fb; color: #001059;
+      display: flex; height: 100vh; overflow: hidden;
     }
-
     .sidebar {
-      width: 240px;
-      background: #001059;
-      color: #f9fafb;
-      padding: 14px 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      box-shadow: 4px 0 10px rgba(0, 0, 0, 0.25);
+      width: 240px; background: #001059; color: #f9fafb;
+      padding: 14px 16px; display: flex; flex-direction: column; gap: 10px;
+      box-shadow: 4px 0 10px rgba(0,0,0,0.25);
     }
-
-    .sidebar-logo img {
-      max-width: 140px;
-      display: block;
-      margin: 0 auto 6px;
-    }
-
-    .sidebar-title-main {
-      font-size: 16px;
-      font-weight: 600;
-    }
-
-    .sidebar-title-sub {
-      font-size: 12px;
-      opacity: 0.9;
-      margin-bottom: 4px;
-    }
-
+    .sidebar-logo img { max-width: 140px; display: block; margin: 0 auto 6px; }
+    .sidebar-title-main { font-size: 16px; font-weight: 600; }
+    .sidebar-title-sub { font-size: 12px; opacity: .9; margin-bottom: 4px; }
     .tag {
-      display: inline-block;
-      font-size: 11px;
-      padding: 2px 8px;
-      border-radius: 999px;
-      border: 1px solid #48ef6c;
-      color: #48ef6c;
-      background: rgba(72, 239, 108, 0.15);
+      display: inline-block; font-size: 11px; padding: 2px 8px;
+      border-radius: 999px; border: 1px solid #48ef6c;
+      color: #48ef6c; background: rgba(72,239,108,.15);
     }
-
-    #statsBox {
-      margin-top: 8px;
-      font-size: 12px;
-    }
-
-    #statsBox span {
-      font-weight: 600;
-    }
-
+    #statsBox { margin-top: 8px; font-size: 12px; }
+    #statsBox span { font-weight: 600; }
     .main-panel {
-      width: 420px;
-      background: #fff;
-      padding: 10px 14px;
-      border-right: 2px solid #001059;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      overflow-y: auto;
+      width: 420px; background: #fff; padding: 10px 14px;
+      border-right: 2px solid #001059; display: flex; flex-direction: column;
+      gap: 8px; overflow-y: auto;
     }
-
-    h2 {
-      margin: 0 0 4px;
-      font-size: 16px;
-    }
-
-    small {
-      font-size: 12px;
-      color: #6b7280;
-    }
-
+    h2 { margin: 0 0 4px; font-size: 16px; }
+    small { font-size: 12px; color: #6b7280; }
     label {
-      font-size: 12px;
-      font-weight: 600;
-      margin: 6px 0 2px;
-      display: block;
+      font-size: 12px; font-weight: 600; margin: 6px 0 2px; display: block;
     }
-
-    select,
-    input[type="text"] {
-      width: 100%;
-      padding: 6px 9px;
-      border-radius: 999px;
-      border: 2px solid #001059;
-      background: #f9fafb;
-      font-size: 13px;
+    select, input[type="text"] {
+      width: 100%; padding: 6px 9px; border-radius: 999px;
+      border: 2px solid #001059; background: #f9fafb; font-size: 13px;
     }
-
-    select:focus,
-    input:focus {
-      border-color: #48ef6c;
-      background: #fff;
-      box-shadow: 0 0 0 2px rgba(72, 239, 108, 0.25);
+    select:focus, input:focus {
+      border-color: #48ef6c; background: #fff;
+      box-shadow: 0 0 0 2px rgba(72,239,108,.25);
     }
-
     .section-card {
-      margin-top: 8px;
-      background: #f9fafb;
-      border-radius: 10px;
-      border: 1px solid #e5e7eb;
-      padding: 8px;
-      font-size: 13px;
+      margin-top: 8px; background: #f9fafb; border-radius: 10px;
+      border: 1px solid #e5e7eb; padding: 8px; font-size: 13px;
     }
-
     .section-title {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      margin-bottom: 4px;
-      font-weight: 600;
+      display: flex; align-items: center; gap: 4px; margin-bottom: 4px; font-weight: 600;
     }
-
-    .section-count {
-      font-size: 12px;
-      color: #6b7280;
-    }
-
+    .section-count { font-size: 12px; color: #6b7280; }
     .badge {
-      padding: 2px 6px;
-      border-radius: 999px;
-      font-size: 10px;
-      font-weight: 700;
+      padding: 2px 6px; border-radius: 999px; font-size: 10px; font-weight: 700;
     }
-
-    .badge-abaixo {
-      background: #dcfce7;
-      color: #166534;
-    }
-
-    .badge-media {
-      background: #dbeafe;
-      color: #1d4ed8;
-    }
-
-    .badge-acima {
-      background: #fef9c3;
-      color: #854d0e;
-    }
-
-    .badge-muito {
-      background: #fee2e2;
-      color: #b91c1c;
-    }
-
+    .badge-abaixo { background: #dcfce7; color: #166534; }
+    .badge-media { background: #dbeafe; color: #1d4ed8; }
+    .badge-acima { background: #fef9c3; color: #854d0e; }
+    .badge-muito { background: #fee2e2; color: #b91c1c; }
     .posto-item {
-      padding: 5px 2px;
-      border-bottom: 1px dashed #e5e7eb;
-      cursor: pointer;
+      padding: 5px 2px; border-bottom: 1px dashed #e5e7eb; cursor: pointer;
     }
-
-    .posto-item:hover {
-      background: #e5ebff;
-    }
-
+    .posto-item:hover { background: #e5ebff; }
     .map-panel {
-      flex: 1;
-      padding: 10px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
+      flex: 1; padding: 10px; display: flex; flex-direction: column; gap: 6px;
     }
-
     #map {
-      flex: 1;
-      border-radius: 12px;
-      border: 2px solid #001059;
+      flex: 1; border-radius: 12px; border: 2px solid #001059;
       overflow: hidden;
     }
-
     .loader {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      border: 4px solid #e5e7eb;
-      border-top: 4px solid #48ef6c;
-      transform: translate(-50%, -50%);
-      animation: spin 1s linear infinite;
-      display: none;
-      z-index: 999;
+      position: fixed; top: 50%; left: 50%; width: 32px; height: 32px;
+      border-radius: 50%; border: 4px solid #e5e7eb; border-top: 4px solid #48ef6c;
+      transform: translate(-50%, -50%); animation: spin 1s linear infinite;
+      display: none; z-index: 999;
     }
-
     @keyframes spin {
-      0% {
-        transform: translate(-50%, -50%) rotate(0deg);
-      }
-
-      100% {
-        transform: translate(-50%, -50%) rotate(360deg);
-      }
+      0% { transform: translate(-50%, -50%) rotate(0deg); }
+      100% { transform: translate(-50%, -50%) rotate(360deg); }
     }
   </style>
 </head>
+
 <body>
   <div class="loader" id="loader"></div>
 
@@ -266,21 +137,12 @@
       </select>
 
       <label>Nome do posto</label>
-      <input
-        type="text"
-        id="filtroNome"
-        placeholder="Digite parte do nome"
-      />
+      <input type="text" id="filtroNome" placeholder="Digite parte do nome" />
 
       <label>Endereço</label>
-      <input
-        type="text"
-        id="filtroEndereco"
-        placeholder="Digite parte do endereço"
-      />
+      <input type="text" id="filtroEndereco" placeholder="Digite parte do endereço" />
     </section>
 
-    <!-- LISTA TOP 10 -->
     <section class="section-card" id="cardLista">
       <div class="section-title">
         <span class="badge badge-abaixo">Abaixo</span>
@@ -291,7 +153,6 @@
       <div id="listaPostos"></div>
     </section>
 
-    <!-- TABELA ACIMA / MUITO ACIMA -->
     <section class="section-card" id="cardTabela">
       <div class="section-title">
         <span class="badge badge-acima">Acima</span>
@@ -315,7 +176,6 @@
     </section>
   </main>
 
-  <!-- MAPA -->
   <section class="map-panel">
     <h3>Mapa – Postos abaixo da média</h3>
     <small>Somente os 10 mais baratos aparecem no mapa.</small>
@@ -358,7 +218,6 @@
       return "desconhecido";
     }
 
-    // --------- CARREGAR XLSX ---------
     async function carregarXLSX() {
       showLoader(true);
 
@@ -389,19 +248,16 @@
       showLoader(false);
     }
 
-    // --------- MAPA ---------
     function inicializarMapa() {
       map = L.map("map").setView([-14.5, -51.5], 4);
 
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(
-        map
-      );
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png")
+        .addTo(map);
 
       markersLayer = L.layerGroup().addTo(map);
     }
 
     const geocodeCache = {};
-
     async function atualizarMapa(lista) {
       markersLayer.clearLayers();
 
@@ -412,25 +268,35 @@
 
       for (const p of abaixo) {
 
-        const q = `${p.endereco}, ${p.cidade}, ${p.uf}, Brasil`;
+        const qEndereco = `${p.endereco}, ${p.cidade}, ${p.uf}, Brasil`;
+        const qCidade = `${p.cidade}, ${p.uf}, Brasil`;
+        const qEstado = `${p.uf}, Brasil`;
 
-        if (!geocodeCache[q]) {
+        async function obterCoordenadas(q) {
           const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(q)}`;
-
           try {
             const r = await fetch(url);
             const d = await r.json();
-            if (!d.length) continue;
-
-            geocodeCache[q] = [parseFloat(d[0].lat), parseFloat(d[0].lon)];
-
-          } catch (e) {
-            console.error("Erro ao geocodificar:", q);
-            continue;
-          }
+            if (d.length) {
+              return [parseFloat(d[0].lat), parseFloat(d[0].lon)];
+            }
+          } catch (e) {}
+          return null;
         }
 
-        const [lat, lon] = geocodeCache[q];
+        if (!geocodeCache[qEndereco]) {
+          let coords = await obterCoordenadas(qEndereco);
+
+          if (!coords) coords = await obterCoordenadas(qCidade);
+
+          if (!coords) coords = await obterCoordenadas(qEstado);
+
+          if (!coords) continue;
+
+          geocodeCache[qEndereco] = coords;
+        }
+
+        const [lat, lon] = geocodeCache[qEndereco];
 
         const m = L.circleMarker([lat, lon], {
           radius: 6,
@@ -447,34 +313,18 @@
         p._marker = m;
       }
 
-      // 🔥 ZOOM BASEADO NOS FILTROS (UF / CIDADE)
-      const uf = document.getElementById("filtroUF").value;
-      const cidade = document.getElementById("filtroCidade").value;
+      const filteredUF = document.getElementById("filtroUF").value;
+      const filteredCID = document.getElementById("filtroCidade").value;
 
-      if (cidade) {
-        const coords = abaixo
-          .map(p => geocodeCache[`${p.endereco}, ${p.cidade}, ${p.uf}, Brasil`])
-          .filter(c => c);
-
-        if (coords.length > 0) {
-          map.fitBounds(coords.map(c => [c[0], c[1]]), { padding: [25, 25] });
-        }
-
-      } else if (uf) {
-        const coords = abaixo
-          .map(p => geocodeCache[`${p.endereco}, ${p.cidade}, ${p.uf}, Brasil`])
-          .filter(c => c);
-
-        if (coords.length > 0) {
-          map.fitBounds(coords.map(c => [c[0], c[1]]), { padding: [25, 25] });
-        }
-
+      if (markersLayer.getLayers().length > 0) {
+        try {
+          map.fitBounds(markersLayer.getBounds(), { padding: [30, 30] });
+        } catch (e) {}
       } else {
         map.setView([-14.5, -51.5], 4);
       }
     }
 
-    // --------- FILTROS ---------
     function inicializarFiltros() {
       const ufSel = document.getElementById("filtroUF");
       const mercSel = document.getElementById("filtroMercadoria");
@@ -516,15 +366,12 @@
       atualizarInterface();
     }
 
-    // --------- FILTRAR ---------
     function filtrar() {
       const uf = document.getElementById("filtroUF").value;
       const cid = document.getElementById("filtroCidade").value;
       const m = document.getElementById("filtroMercadoria").value;
       const nome = document.getElementById("filtroNome").value.toLowerCase();
-      const end = document
-        .getElementById("filtroEndereco")
-        .value.toLowerCase();
+      const end = document.getElementById("filtroEndereco").value.toLowerCase();
 
       return postos.filter(
         (p) =>
@@ -536,7 +383,6 @@
       );
     }
 
-    // --------- UI ---------
     function atualizarInterface() {
       const list = filtrar();
       atualizarStats(list);
@@ -572,9 +418,7 @@
         .sort((a, b) => a.precoNum - b.precoNum)
         .slice(0, 10);
 
-      document.getElementById(
-        "countLista"
-      ).textContent = `(${top.length})`;
+      document.getElementById("countLista").textContent = `(${top.length})`;
 
       top.forEach((p) => {
         div.innerHTML += `
@@ -595,9 +439,7 @@
         .filter((p) => p.status === "acima" || p.status === "muito_acima")
         .sort((a, b) => b.desvioNum - a.desvioNum);
 
-      document.getElementById(
-        "countTabela"
-      ).textContent = `(${crit.length})`;
+      document.getElementById("countTabela").textContent = `(${crit.length})`;
 
       crit.forEach((p) => {
         tbody.innerHTML += `
