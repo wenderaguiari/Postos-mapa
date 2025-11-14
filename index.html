@@ -223,7 +223,7 @@
 
     <section>
       <h2>Filtros</h2>
-      <small>Filtre por UF, Cidade, Nome, Endereço e Combustível.</small>
+      <small>Filtre por UF, Cidade, Nome, Endereço e Mercadoria.</small>
 
       <div class="filtros">
 
@@ -238,7 +238,7 @@
         </div>
 
         <div>
-          <label for="filtroComb">Combustível</label>
+          <label for="filtroComb">Mercadoria</label>
           <select id="filtroComb"><option value="">Todos</option></select>
         </div>
 
@@ -284,7 +284,7 @@
             <th>Cidade/UF</th>
             <th>Desvio (%)</th>
             <th>Preço (R$)</th>
-            <th>Combustível</th>
+            <th>Mercadoria</th>
             <th>Grupo</th>
           </tr>
         </thead>
@@ -364,17 +364,17 @@
           const uf = getCol(row, "UF EC");
           const cidade = getCol(row, "Cidade EC");
           const endereco = getCol(row, "Logradouro EC");
-          const combustivel = getCol(row, "Combustível");
+          const mercadoria = getCol(row, "Combustível");
           const blacklist = getCol(row, "Blacklist");
 
-          if (!nome || !uf || !cidade || !endereco || !combustivel) return null;
+          if (!nome || !uf || !cidade || !endereco || !mercadoria) return null;
 
           return {
             nome: nome.trim(),
             uf: uf.trim(),
             cidade: cidade.trim(),
             endereco: endereco.trim(),
-            combustivel: combustivel.trim(),
+            combustivel: mercadoria.trim(),
             desvioNum: parseDesvio(getCol(row, "Desvio de Preço (%)")),
             precoNum: parsePreco(getCol(row, "Preço por Litro")),
             status: classificarStatus(blacklist),
@@ -396,7 +396,7 @@
       const cidadeSelect = document.getElementById("filtroCidade");
       const nomeInput = document.getElementById("filtroNome");
       const endInput = document.getElementById("filtroEndereco");
-      const combSelect = document.getElementById("filtroComb");
+      const mercaSelect = document.getElementById("filtroComb");
 
       const ufs = [...new Set(postos.map(p => p.uf))].sort();
       ufs.forEach(uf => {
@@ -406,7 +406,7 @@
         ufSelect.appendChild(opt);
       });
 
-      const combustiveis = [...new Set(postos.map(p => p.combustivel))].sort();
+      const marcadoria = [...new Set(postos.map(p => p.mercadoria))].sort();
       combustiveis.forEach(c => {
         const opt = document.createElement("option");
         opt.value = c;
@@ -442,12 +442,12 @@
       const cidade = document.getElementById("filtroCidade").value;
       const nome = document.getElementById("filtroNome").value.toLowerCase();
       const endereco = document.getElementById("filtroEndereco").value.toLowerCase();
-      const comb = document.getElementById("filtroComb").value;
+      const merca = document.getElementById("filtroComb").value;
 
       return postos.filter(p =>
         (!uf || p.uf === uf) &&
         (!cidade || p.cidade === cidade) &&
-        (!comb || p.combustivel === comb) &&
+        (!merca || p.mercadoria === merca) &&
         (!nome || p.nome.toLowerCase().includes(nome)) &&
         (!endereco || p.endereco.toLowerCase().includes(endereco))
       );
