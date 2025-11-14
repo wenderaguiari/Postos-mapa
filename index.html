@@ -12,75 +12,17 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
   <style>
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: system-ui;
-      font-size: 14px;
-      background: #f3f6fb;
-      color: #001059;
-      display: flex;
-      height: 100vh;
-      overflow: hidden;
-    }
-
-    .sidebar {
-      width: 240px;
-      background: #001059;
-      color: #f9fafb;
-      padding: 14px 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      box-shadow: 4px 0 10px rgba(0,0,0,0.25);
-    }
-    .sidebar-logo img { max-width: 140px; margin:0 auto 6px; display:block; }
-    .sidebar-title-main { font-size: 16px; font-weight: 600; }
-    .sidebar-title-sub { font-size: 12px; opacity: 0.9; }
-    .tag { font-size:11px; padding:2px 8px; border-radius:999px; border:1px solid #48ef6c; color:#48ef6c; background:rgba(72,239,108,0.15); }
-
-    .main-panel {
-      width: 420px;
-      background:#fff;
-      padding:10px 14px;
-      border-right:2px solid #001059;
-      display:flex;
-      flex-direction:column;
-      gap:8px;
-      overflow-y:auto;
-    }
-
-    label { font-size:12px; margin-top:6px; font-weight:600; display:block; }
-    select, input {
-      width:100%; padding:6px 9px; border-radius:999px; border:2px solid #001059;
-      background:#f9fafb; font-size:13px;
-    }
-    select:focus, input:focus { border-color:#48ef6c; background:#fff; box-shadow:0 0 0 2px rgba(72,239,108,0.25); }
-
-    .section-card {
-      margin-top:8px; background:#f9fafb; border:1px solid #e5e7eb;
-      border-radius:10px; padding:8px;
-    }
-
-    .badge { padding:2px 6px; border-radius:999px; font-size:10px; font-weight:700; }
-    .badge-abaixo { background:#dcfce7; color:#166534; }
-    .badge-media { background:#dbeafe; color:#1d4ed8; }
-    .badge-acima { background:#fef9c3; color:#854d0e; }
-    .badge-muito { background:#fee2e2; color:#b91c1c; }
-
-    .posto-item { padding:5px 2px; border-bottom:1px dashed #e5e7eb; cursor:pointer; }
-    .posto-item:hover { background:#e5ebff; }
-
-    .map-panel {
-      flex:1; padding:10px; display:flex; flex-direction:column; gap:6px;
-    }
-    #map { flex:1; border-radius:12px; border:2px solid #001059; overflow:hidden; }
-    .loader {
-      position:fixed; top:50%; left:50%; width:32px; height:32px;
-      border-radius:50%; border:4px solid #e5e7eb; border-top:4px solid #48ef6c;
-      transform:translate(-50%,-50%); animation:spin 1s linear infinite; display:none; z-index:999;
-    }
-    @keyframes spin { 0%{transform:translate(-50%,-50%) rotate(0deg);} 100%{transform:translate(-50%,-50%) rotate(360deg);} }
+    body{margin:0;display:flex;height:100vh;font-family:Arial}
+    .sidebar{width:240px;background:#001059;color:white;padding:15px}
+    .main-panel{width:420px;background:white;padding:10px;border-right:3px solid #001059;overflow-y:auto}
+    .map-panel{flex:1;padding:10px}
+    #map{flex:1;border:2px solid #001059;border-radius:12px;height:100%}
+    .loader{position:fixed;top:50%;left:50%;width:32px;height:32px;border-radius:50%;border:4px solid #ccc;border-top-color:#48ef6c;animation:spin 1s infinite linear;display:none;z-index:999}
+    @keyframes spin{to{transform:translate(-50%,-50%) rotate(360deg)}}
+    .posto-item:hover{background:#eef}
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    th{background:#001059;color:white;padding:5px}
+    td{border:1px solid #ddd;padding:5px}
   </style>
 </head>
 
@@ -88,287 +30,230 @@
 
 <div class="loader" id="loader"></div>
 
-<!-- SIDEBAR -->
 <aside class="sidebar">
-  <div class="sidebar-logo"><img src="Imagem1.png" /></div>
-  <div class="sidebar-title-main">Painel de Postos</div>
-  <div class="sidebar-title-sub">Desvio de Preço & Classificação</div>
-  <span class="tag">Alloha Frotas - Uso interno</span>
-
-  <div id="statsBox">
-    <div>Abaixo: <span id="statsAbaixo">0</span></div>
-    <div>Média: <span id="statsMedia">0</span></div>
-    <div>Acima: <span id="statsAcima">0</span></div>
-    <div>Muito acima: <span id="statsMuito">0</span></div>
-  </div>
+  <h3>Painel de Postos</h3>
+  <p>Abaixo: <span id="statsAbaixo">0</span></p>
+  <p>Média: <span id="statsMedia">0</span></p>
+  <p>Acima: <span id="statsAcima">0</span></p>
+  <p>Muito acima: <span id="statsMuito">0</span></p>
 </aside>
 
-<!-- PAINEL CENTRAL -->
 <main class="main-panel">
-  <section>
-    <h2>Filtros</h2>
 
-    <label>UF</label>
-    <select id="filtroUF"><option value="">Todas</option></select>
+  <h3>Filtros</h3>
 
-    <label>Cidade</label>
-    <select id="filtroCidade"><option value="">Todas</option></select>
+  <label>UF</label>
+  <select id="filtroUF"><option value="">Todas</option></select>
 
-    <label>Mercadoria</label>
-    <select id="filtroMercadoria"><option value="">Todas</option></select>
+  <label>Cidade</label>
+  <select id="filtroCidade"><option value="">Todas</option></select>
 
-    <label>Nome do posto</label>
-    <input id="filtroNome" placeholder="Digite parte do nome"/>
+  <label>Mercadoria</label>
+  <select id="filtroMercadoria"><option value="">Todas</option></select>
 
-    <label>Endereço</label>
-    <input id="filtroEndereco" placeholder="Digite parte do endereço"/>
-  </section>
+  <label>Nome</label>
+  <input id="filtroNome"/>
 
-  <section class="section-card">
-    <div class="section-title">
-      <span class="badge badge-abaixo">Abaixo</span>
-      <span class="badge badge-media">Na média</span>
-      Top 10 mais baratos
-      <span id="countLista"></span>
-    </div>
-    <div id="listaPostos"></div>
-  </section>
+  <label>Endereço</label>
+  <input id="filtroEndereco"/>
 
-  <section class="section-card">
-    <div class="section-title">
-      <span class="badge badge-acima">Acima</span>
-      <span class="badge badge-muito">Muito acima</span>
-      Postos críticos
-      <span id="countTabela"></span>
-    </div>
+  <h3>TOP 10 mais baratos</h3>
+  <div id="listaPostos"></div>
 
-    <table>
-      <thead>
-        <tr><th>Posto</th><th>Cidade</th><th>Desvio</th><th>Preço</th><th>Grupo</th></tr>
-      </thead>
-      <tbody id="tabelaAcima"></tbody>
-    </table>
-  </section>
+  <h3>Postos acima/muito acima</h3>
+  <table>
+    <thead>
+      <tr><th>Posto</th><th>Cidade</th><th>Desvio</th><th>Preço</th><th>Grupo</th></tr>
+    </thead>
+    <tbody id="tabelaAcima"></tbody>
+  </table>
+
 </main>
 
-<!-- MAPA -->
 <section class="map-panel">
-  <h3>Mapa – Postos abaixo da média</h3>
-  <small>Somente os 10 mais baratos aparecem no mapa.</small>
+  <h3>Mapa</h3>
   <div id="map"></div>
 </section>
 
-<!-- SCRIPT -->
 <script>
-  const XLSX_FILE = "mapa-postos.xlsx";
-  let postos = [];
+const XLSX_FILE = "mapa-postos.xlsx";
+let postos = [];
 
-  function showLoader(s){ document.getElementById("loader").style.display = s ? "block" : "none"; }
+function showLoader(s){document.getElementById("loader").style.display=s?"block":"none";}
 
-  // —— PARSERS ——
-  function parsePreco(v){
-    if(!v) return null;
-    v = String(v).replace("R$","").trim().replace(",",".");
-    return parseFloat(v);
-  }
-  function parseDesvio(v){
-    if(!v) return null;
-    v = String(v).replace("%","").trim().replace(",",".");
-    return parseFloat(v);
-  }
-  function classificarStatus(t){
-    if(!t) return "desconhecido";
-    t = t.toLowerCase();
-    if(t.includes("abaixo")) return "abaixo";
-    if(t.includes("dentro")) return "media";
-    if(t.includes("muito")) return "muito_acima";
-    if(t.includes("acima")) return "acima";
-    return "desconhecido";
-  }
-  function fmt(n){ return n ? n.toFixed(2) : ""; }
+function parsePreco(v){
+  if(!v) return null;
+  v = String(v).replace(/[^0-9,.-]/g,"").replace(",",".");
+  const n = parseFloat(v);
+  return isNaN(n) ? null : n;
+}
 
-  // —— LEITURA DO XLSX ——
-  async function carregarXLSX(){
-    showLoader(true);
-    const resp = await fetch(XLSX_FILE);
-    const data = await resp.arrayBuffer();
+function parseDesvio(v){
+  if(!v) return null;
+  v = String(v).replace(/[^0-9,.-]/g,"").replace(",",".");
+  const n = parseFloat(v);
+  return isNaN(n) ? null : n;
+}
 
-    const workbook = XLSX.read(data, { type: "array" });
-    const sheet = workbook.Sheets[workbook.SheetNames[0]];
-    const json = XLSX.utils.sheet_to_json(sheet, { defval:"" });
+function classificarStatus(t){
+  if(!t) return "desconhecido";
+  t = t.toLowerCase();
+  if(t.includes("abaixo")) return "abaixo";
+  if(t.includes("dentro")) return "media";
+  if(t.includes("muito")) return "muito_acima";
+  if(t.includes("acima")) return "acima";
+  return "desconhecido";
+}
 
-    postos = json.map(row => {
-      // detecta automaticamente a coluna contendo "preço"
-      const precoCol = Object.keys(row).find(c => c.toLowerCase().includes("preço"));
-      const desvioCol = Object.keys(row).find(c => c.toLowerCase().includes("desvio"));
+(async function carregarXLSX(){
+  showLoader(true);
 
-      return {
-        nome: row["Nome EC"],
-        uf: row["UF EC"],
-        cidade: row["Cidade EC"],
-        endereco: row["Logradouro EC"],
-        mercadoria: row["Mercadoria"],
-        precoNum: parsePreco(row[precoCol]),
-        desvioNum: parseDesvio(row[desvioCol]),
-        blacklist: row["Blacklist"],
-        status: classificarStatus(row["Blacklist"]),
-        _marker: null
-      };
-    });
+  const resp = await fetch(XLSX_FILE);
+  const data = await resp.arrayBuffer();
+  const wb = XLSX.read(data);
+  const sheet = wb.Sheets[wb.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json(sheet, {defval:""});
 
-    inicializarInterface();
-    showLoader(false);
-  }
+  postos = rows.map(r=>{
+    // detecta automaticamente QUALQUER nome que contenha "preço"
+    const precoCol = Object.keys(r).find(c => c.toLowerCase().includes("preço"));
+    const desvioCol = Object.keys(r).find(c => c.toLowerCase().includes("desvio"));
 
-  // — MAPA —
-  let map, markersLayer;
+    return {
+      nome: r["Nome EC"],
+      uf: r["UF EC"],
+      cidade: r["Cidade EC"],
+      endereco: r["Logradouro EC"],
+      mercadoria: r["Mercadoria"],
+      precoNum: parsePreco(r[precoCol]),
+      desvioNum: parseDesvio(r[desvioCol]),
+      blacklist: r["Blacklist"],
+      status: classificarStatus(r["Blacklist"])
+    };
+  });
 
-  function inicializarMapa(){
-    map = L.map("map").setView([-14,-52], 4);
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
-    markersLayer = L.layerGroup().addTo(map);
-  }
+  inicializarInterface();
+  showLoader(false);
+})();
 
-  async function atualizarMapa(lista){
-    markersLayer.clearLayers();
+// MAPA
+let map = L.map("map").setView([-14,-52], 4);
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
+let markersLayer = L.layerGroup().addTo(map);
 
-    const top = lista
-      .filter(p => p.status === "abaixo" || p.status === "media")
-      .sort((a,b)=>a.precoNum - b.precoNum)
-      .slice(0,10);
+// FILTROS
+function inicializarInterface(){
+  inicializarFiltros();
+  atualizarInterface();
+}
 
-    for(const p of top){
-      const query = `${p.endereco}, ${p.cidade} - ${p.uf}`;
-      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`;
+function inicializarFiltros(){
+  const ufs = [...new Set(postos.map(p=>p.uf))].sort();
+  ufs.forEach(u=>filtroUF.innerHTML+=`<option>${u}</option>`);
 
-      const resp = await fetch(url);
-      const data = await resp.json();
-      if(!data.length) continue;
+  const mercs = [...new Set(postos.map(p=>p.mercadoria))].sort();
+  mercs.forEach(m=>m && (filtroMercadoria.innerHTML+=`<option>${m}</option>`));
 
-      const lat = data[0].lat, lon = data[0].lon;
+  filtroUF.onchange = preencherCidades;
+  filtroCidade.onchange = filtroMercadoria.onchange = atualizarInterface;
+  filtroNome.oninput = filtroEndereco.oninput = atualizarInterface;
 
-      const marker = L.circleMarker([lat,lon], {
-        radius: 6,
-        fillColor:"#22c55e",
-        color:"#14532d",
-        weight:2,
-        fillOpacity:0.9
-      }).addTo(markersLayer);
+  preencherCidades();
+}
 
-      marker.bindPopup(`
+function preencherCidades(){
+  const uf = filtroUF.value;
+  filtroCidade.innerHTML="<option value=''>Todas</option>";
+  [...new Set(postos.filter(p=>!uf||p.uf===uf).map(p=>p.cidade))]
+    .sort()
+    .forEach(c=>filtroCidade.innerHTML+=`<option>${c}</option>`);
+}
+
+function filtrar(){
+  const uf=filtroUF.value, cid=filtroCidade.value, merc=filtroMercadoria.value;
+  const nome=filtroNome.value.toLowerCase(), end=filtroEndereco.value.toLowerCase();
+
+  return postos.filter(p =>
+    (!uf||p.uf===uf)&&
+    (!cid||p.cidade===cid)&&
+    (!merc||p.mercadoria===merc)&&
+    (!nome||p.nome.toLowerCase().includes(nome))&&
+    (!end||p.endereco.toLowerCase().includes(end))
+  );
+}
+
+function atualizarInterface(){
+  const list = filtrar();
+  atualizarStats(list);
+  atualizarLista(list);
+  atualizarTabela(list);
+  atualizarMapa(list);
+}
+
+function atualizarStats(l){
+  statsAbaixo.textContent = l.filter(p=>p.status==="abaixo").length;
+  statsMedia.textContent = l.filter(p=>p.status==="media").length;
+  statsAcima.textContent = l.filter(p=>p.status==="acima").length;
+  statsMuito.textContent = l.filter(p=>p.status==="muito_acima").length;
+}
+
+function atualizarLista(l){
+  listaPostos.innerHTML="";
+  const top = l
+    .filter(p=>["abaixo","media"].includes(p.status))
+    .sort((a,b)=>a.precoNum-b.precoNum)
+    .slice(0,10);
+
+  top.forEach(p=>{
+    listaPostos.innerHTML+=`
+      <div class='posto-item'>
         <strong>${p.nome}</strong><br>
-        ${p.endereco}<br>${p.cidade} - ${p.uf}<br>
-        Preço: R$ ${fmt(p.precoNum)}<br>
-        Desvio: ${fmt(p.desvioNum)}%
-      `);
+        ${p.cidade} - ${p.uf}<br>
+        R$ ${p.precoNum?.toFixed(2)} • ${p.desvioNum?.toFixed(2)}%
+      </div>
+    `;
+  });
+}
 
-      p._marker = marker;
-    }
+function atualizarTabela(l){
+  tabelaAcima.innerHTML="";
+  const crit = l.filter(p=>p.status==="acima"||p.status==="muito_acima")
+                .sort((a,b)=>b.desvioNum-a.desvioNum);
+  crit.forEach(p=>{
+    tabelaAcima.innerHTML+=`
+      <tr>
+        <td>${p.nome}</td>
+        <td>${p.cidade}</td>
+        <td>${p.desvioNum?.toFixed(2)}%</td>
+        <td>R$ ${p.precoNum?.toFixed(2)}</td>
+        <td>${p.status}</td>
+      </tr>`;
+  });
+}
+
+async function atualizarMapa(l){
+  markersLayer.clearLayers();
+  const top = l.filter(p=>["abaixo","media"].includes(p.status))
+               .sort((a,b)=>a.precoNum-b.precoNum)
+               .slice(0,10);
+
+  for(const p of top){
+    const q = `${p.endereco}, ${p.cidade} - ${p.uf}`;
+    const url=`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=1`;
+    const resp=await fetch(url);
+    const data=await resp.json();
+    if(!data.length) continue;
+
+    const lat=data[0].lat, lon=data[0].lon;
+
+    L.circleMarker([lat,lon],{
+      radius:6,fillColor:"#22c55e",color:"#14532d",
+      fillOpacity:0.9,weight:2
+    })
+    .bindPopup(`<strong>${p.nome}</strong><br>R$ ${p.precoNum?.toFixed(2)}`)
+    .addTo(markersLayer);
   }
-
-  // — FILTROS —
-  function inicializarFiltros(){
-    const ufs = [...new Set(postos.map(p=>p.uf))].sort();
-    const mercs = [...new Set(postos.map(p=>p.mercadoria))].sort();
-
-    ufs.forEach(u => filtroUF.innerHTML += `<option>${u}</option>`);
-    mercs.forEach(m => m && (filtroMercadoria.innerHTML += `<option>${m}</option>`));
-
-    filtroUF.onchange = preencherCidades;
-    filtroCidade.onchange = filtroMercadoria.onchange = atualizarInterface;
-    filtroNome.oninput = filtroEndereco.oninput = atualizarInterface;
-
-    preencherCidades();
-  }
-
-  function preencherCidades(){
-    const uf = filtroUF.value;
-    filtroCidade.innerHTML = "<option>Todas</option>";
-
-    const cidades = [...new Set(postos.filter(p=>!uf || p.uf===uf).map(p=>p.cidade))].sort();
-    cidades.forEach(c => filtroCidade.innerHTML += `<option>${c}</option>`);
-
-    atualizarInterface();
-  }
-
-  function filtrar(){
-    const uf = filtroUF.value;
-    const cid = filtroCidade.value;
-    const merc = filtroMercadoria.value;
-    const nome = filtroNome.value.toLowerCase();
-    const end = filtroEndereco.value.toLowerCase();
-
-    return postos.filter(p =>
-      (!uf || p.uf===uf) &&
-      (!cid || p.cidade===cid) &&
-      (!merc || p.mercadoria===merc) &&
-      (!nome || p.nome.toLowerCase().includes(nome)) &&
-      (!end || p.endereco.toLowerCase().includes(end))
-    );
-  }
-
-  // — INTERFACE —
-  function atualizarInterface(){
-    const lista = filtrar();
-    atualizarStats(lista);
-    atualizarLista(lista);
-    atualizarTabela(lista);
-    atualizarMapa(lista);
-  }
-
-  function atualizarStats(list){
-    statsAbaixo.textContent = list.filter(p=>p.status==="abaixo").length;
-    statsMedia.textContent = list.filter(p=>p.status==="media").length;
-    statsAcima.textContent = list.filter(p=>p.status==="acima").length;
-    statsMuito.textContent = list.filter(p=>p.status==="muito_acima").length;
-  }
-
-  function atualizarLista(list){
-    listaPostos.innerHTML = "";
-
-    const top = list
-      .filter(p=>p.status==="abaixo" || p.status==="media")
-      .sort((a,b)=>a.precoNum-b.precoNum)
-      .slice(0,10);
-
-    countLista.textContent = `(${top.length})`;
-
-    top.forEach(p => {
-      listaPostos.innerHTML += `
-        <div class="posto-item">
-          <strong>${p.nome}</strong><br>
-          ${p.cidade} - ${p.uf}<br>
-          R$ ${fmt(p.precoNum)} • ${fmt(p.desvioNum)}%
-        </div>
-      `;
-    });
-  }
-
-  function atualizarTabela(list){
-    tabelaAcima.innerHTML = "";
-
-    const crit = list
-      .filter(p=>p.status==="acima" || p.status==="muito_acima")
-      .sort((a,b)=>b.desvioNum-a.desvioNum);
-
-    countTabela.textContent = `(${crit.length})`;
-
-    crit.forEach(p => {
-      tabelaAcima.innerHTML += `
-        <tr>
-          <td>${p.nome}</td>
-          <td>${p.cidade} - ${p.uf}</td>
-          <td>${fmt(p.desvioNum)}%</td>
-          <td>R$ ${fmt(p.precoNum)}</td>
-          <td>${p.status}</td>
-        </tr>
-      `;
-    });
-  }
-
-  // INICIAR
-  inicializarMapa();
-  carregarXLSX();
+}
 </script>
 
 </body>
