@@ -1,729 +1,279 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Painel de Postos - Alloha</title>
+<meta charset="UTF-8">
+<title>Painel de Postos - Alloha Fibra</title>
 
-  <!-- Estilos -->
-  <style>
-    * {
-      box-sizing: border-box;
-    }
+<!-- Leaflet Map -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
 
+<style>
     body {
-      margin: 0;
-      font-family: "Segoe UI", Arial, sans-serif;
-      background: #f6f8fb;
-      color: #111827;
+        margin: 0;
+        font-family: "Segoe UI", Arial, sans-serif;
+        background: #F3F6FB;
+        display: flex;
+        height: 100vh;
+        overflow: hidden;
     }
 
-    header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 10px 18px;
-      background: #001059;
-      color: #f9fafb;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-      position: sticky;
-      top: 0;
-      z-index: 20;
-    }
-
-    .header-left {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .header-left img {
-      height: 34px;
-      width: auto;
-    }
-
-    .header-title {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .header-title span:nth-child(1) {
-      font-size: 14px;
-      opacity: 0.85;
-    }
-
-    .header-title span:nth-child(2) {
-      font-size: 18px;
-      font-weight: 600;
-    }
-
-    .tag-env {
-      font-size: 11px;
-      padding: 3px 8px;
-      border-radius: 999px;
-      background: rgba(72, 239, 108, 0.15);
-      color: #48ef6c;
-      border: 1px solid rgba(72, 239, 108, 0.5);
-    }
-
-    .container {
-      display: flex;
-      flex-direction: row;
-      height: calc(100vh - 60px);
-    }
-
-    @media (max-width: 900px) {
-      .container {
+    /* Sidebar Azul */
+    .sidebar {
+        width: 300px;
+        background: #001059;
+        color: white;
+        padding: 30px;
+        display: flex;
         flex-direction: column;
-        height: auto;
-      }
+        gap: 20px;
     }
 
-    /* Painel de filtros / listas */
-    .panel-left {
-      width: 38%;
-      min-width: 320px;
-      max-width: 480px;
-      background: #ffffff;
-      padding: 16px;
-      border-right: 1px solid #e5e7eb;
-      box-shadow: 2px 0 6px rgba(15, 23, 42, 0.08);
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
+    .sidebar img {
+        width: 150px;
+        margin-bottom: 20px;
     }
 
-    @media (max-width: 900px) {
-      .panel-left {
+    .sidebar h1 {
+        font-size: 22px;
+        margin: 0;
+    }
+
+    /* Área de filtros e lista */
+    .filters {
+        width: 350px;
+        background: #FFFFFF;
+        border-right: 3px solid #001059;
+        padding: 25px;
+        overflow-y: auto;
+    }
+
+    label {
+        font-weight: bold;
+        color: #001059;
+        margin-top: 10px;
+        display: block;
+    }
+
+    select, input {
         width: 100%;
-        max-width: 100%;
-        border-right: none;
-        border-bottom: 1px solid #e5e7eb;
-        box-shadow: none;
-      }
+        padding: 10px;
+        border: 2px solid #001059;
+        border-radius: 8px;
+        margin-top: 5px;
+        outline: none;
     }
 
-    .titulo-bloco {
-      font-size: 16px;
-      font-weight: 600;
-      margin-bottom: 4px;
+    #listaPostos {
+        margin-top: 20px;
+        padding: 0;
+        list-style: none;
     }
 
-    .subtitulo-bloco {
-      font-size: 12px;
-      color: #6b7280;
-      margin-bottom: 12px;
-    }
-
-    .filtros label {
-      display: block;
-      font-size: 12px;
-      margin-bottom: 4px;
-      color: #374151;
-      font-weight: 500;
-    }
-
-    .filtros select {
-      width: 100%;
-      padding: 8px 10px;
-      border-radius: 999px;
-      border: 1px solid #d1d5db;
-      font-size: 13px;
-      margin-bottom: 10px;
-      outline: none;
-      background: #f9fafb;
-      transition: border-color 0.25s, box-shadow 0.25s;
-    }
-
-    .filtros select:focus {
-      border-color: #48ef6c;
-      box-shadow: 0 0 0 2px rgba(72, 239, 108, 0.25);
-      background: #ffffff;
-    }
-
-    .listas {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      flex: 1;
-      min-height: 0;
-    }
-
-    .secao {
-      padding: 10px 10px 6px;
-      border-radius: 12px;
-      background: #f9fafb;
-      border: 1px solid #e5e7eb;
-      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
-      display: flex;
-      flex-direction: column;
-      max-height: 180px;
-      min-height: 80px;
-    }
-
-    .secao-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 6px;
-    }
-
-    .secao-title {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 13px;
-      font-weight: 600;
+    .postoItem {
+        background: #F3F6FB;
+        padding: 10px;
+        margin-bottom: 10px;
+        border-left: 5px solid #001059;
+        border-radius: 6px;
     }
 
     .badge {
-      display: inline-block;
-      padding: 2px 8px;
-      border-radius: 999px;
-      font-size: 10px;
-      font-weight: 600;
-      letter-spacing: 0.02em;
-      text-transform: uppercase;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: bold;
+        color: white;
     }
 
-    .badge-bloq {
-      background: #fee2e2;
-      color: #b91c1c;
-      border: 1px solid #fecaca;
-    }
+    .acima { background: #E53935; }
+    .abaixo { background: #43A047; }
+    .media { background: #1E88E5; }
+    .bloqueado { background: #555; }
 
-    .badge-dentro {
-      background: #dcfce7;
-      color: #166534;
-      border: 1px solid #bbf7d0;
-    }
-
-    .badge-abaixo {
-      background: #dbeafe;
-      color: #1d4ed8;
-      border: 1px solid #bfdbfe;
-    }
-
-    .secao-count {
-      font-size: 11px;
-      color: #6b7280;
-    }
-
-    ul {
-      padding-left: 0;
-      margin: 0;
-      list-style: none;
-      overflow-y: auto;
-      scrollbar-width: thin;
-    }
-
-    ul::-webkit-scrollbar {
-      width: 6px;
-    }
-    ul::-webkit-scrollbar-thumb {
-      background: #d1d5db;
-      border-radius: 999px;
-    }
-
-    li {
-      font-size: 12px;
-      padding: 5px 2px;
-      border-bottom: 1px dashed #e5e7eb;
-    }
-
-    li:last-child {
-      border-bottom: none;
-    }
-
-    .posto-nome {
-      font-weight: 600;
-      color: #111827;
-    }
-
-    .posto-det {
-      color: #6b7280;
-      font-size: 11px;
-    }
-
-    /* Painel mapa / visão geral */
-    .panel-right {
-      flex: 1;
-      padding: 14px 16px 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    @media (max-width: 900px) {
-      .panel-right {
-        padding: 10px;
-      }
-    }
-
-    .map-container {
-      background: #ffffff;
-      border-radius: 16px;
-      padding: 10px;
-      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
-      border: 1px solid #e5e7eb;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      height: 50vh; /* mapa menor */
-      min-height: 260px;
-    }
-
-    .map-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 13px;
-      font-weight: 500;
-      color: #111827;
-    }
-
-    .map-header span {
-      font-size: 11px;
-      color: #6b7280;
-    }
-
+    /* MAPA */
     #map {
-      flex: 1;
-      width: 100%;
-      border-radius: 12px;
-      overflow: hidden;
+        flex: 1;
+        height: 100vh;
+        border-left: 3px solid #001059;
+        border-radius: 20px;
+        margin: 15px;
     }
 
-    .hint {
-      font-size: 11px;
-      color: #6b7280;
+    /* Responsividade */
+    @media (max-width: 900px) {
+        body { flex-direction: column; }
+        .sidebar { width: 100%; height: auto; text-align: center; }
+        .filters { width: 100%; border-right: none; border-top: 3px solid #001059; }
+        #map { height: 400px; }
     }
-
-    /* Loader simples */
-    .loader {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      border: 6px solid #f3f3f3;
-      border-top: 6px solid #48ef6c;
-      border-radius: 50%;
-      width: 34px;
-      height: 34px;
-      animation: spin 1s linear infinite;
-      display: none;
-      z-index: 999;
-    }
-    @keyframes spin {
-      0% { transform: translate(-50%, -50%) rotate(0deg); }
-      100% { transform: translate(-50%, -50%) rotate(360deg); }
-    }
-  </style>
-
-  <!-- Leaflet (mapa) -->
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-  />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-  <!-- PapaParse (para ler CSV) -->
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+</style>
 </head>
+
 <body>
-  <header>
-    <div class="header-left">
-      <img src="logo_alloha_positivo.png" alt="Alloha Fibra">
-      <div class="header-title">
-        <span>Painel Operacional</span>
-        <span>Postos – Desvio de Preço & Bloqueios</span>
-      </div>
-    </div>
-    <div class="tag-env">
-      Alloha Frotas · Versão Mobile Friendly
-    </div>
-  </header>
 
-  <div class="loader" id="loader"></div>
+<!-- BARRA LATERAL -->
+<div class="sidebar">
+    <img src="logo_alloha_positivo.png">
+    <h1>Painel de Postos</h1>
+    <p>Alloha Fibra</p>
+</div>
 
-  <div class="container">
-    <!-- Lado esquerdo: filtros + listas -->
-    <aside class="panel-left">
-      <div>
-        <div class="titulo-bloco">Filtros</div>
-        <div class="subtitulo-bloco">
-          Selecione UF e Cidade para focar nos postos da sua área.
-        </div>
+<!-- FILTROS -->
+<div class="filters">
+    <h2 style="color:#001059;">Filtros</h2>
 
-        <div class="filtros">
-          <label for="filtroUF">Estado (UF)</label>
-          <select id="filtroUF">
-            <option value="">Todos</option>
-          </select>
+    <label>UF</label>
+    <select id="filtroUF"></select>
 
-          <label for="filtroCidade">Cidade</label>
-          <select id="filtroCidade">
-            <option value="">Todas</option>
-          </select>
-        </div>
-      </div>
+    <label>Cidade</label>
+    <select id="filtroCidade"></select>
 
-      <div class="listas">
-        <div class="secao">
-          <div class="secao-header">
-            <div class="secao-title">
-              <span class="badge badge-bloq">Bloqueados</span>
-              Postos acima / muito acima
-            </div>
-            <div class="secao-count" id="countBloq">(0)</div>
-          </div>
-          <ul id="listaBloqueados"></ul>
-        </div>
+    <label>Pesquisar por nome</label>
+    <input type="text" id="filtroNome" placeholder="Digite o nome">
 
-        <div class="secao">
-          <div class="secao-header">
-            <div class="secao-title">
-              <span class="badge badge-dentro">Dentro</span>
-              Postos dentro da média
-            </div>
-            <div class="secao-count" id="countDentro">(0)</div>
-          </div>
-          <ul id="listaDentro"></ul>
-        </div>
+    <label>Pesquisar por endereço</label>
+    <input type="text" id="filtroEndereco" placeholder="Digite o endereço">
 
-        <div class="secao">
-          <div class="secao-header">
-            <div class="secao-title">
-              <span class="badge badge-abaixo">Abaixo</span>
-              Postos abaixo da média
-            </div>
-            <div class="secao-count" id="countAbaixo">(0)</div>
-          </div>
-          <ul id="listaAbaixo"></ul>
-        </div>
-      </div>
-    </aside>
+    <h2 style="margin-top:20px;color:#001059;">Postos</h2>
+    <ul id="listaPostos"></ul>
+</div>
 
-    <!-- Lado direito: mapa -->
-    <section class="panel-right">
-      <div class="map-container">
-        <div class="map-header">
-          <div>Mapa dos Postos Selecionados</div>
-          <span>Zoom automático conforme filtro de UF/Cidade</span>
-        </div>
-        <div id="map"></div>
-        <div class="hint">
-          Dica: use os filtros à esquerda para focar em uma região específica.  
-          Marcadores exibem nome, endereço, status e preço (quando disponível).
-        </div>
-      </div>
-    </section>
-  </div>
+<!-- MAPA -->
+<div id="map"></div>
 
-  <script>
-    // ==========================
-    // CONFIGURAÇÃO BÁSICA
-    // ==========================
-    const CSV_FILE = "postos-mapa.csv";
+<script>
+let mapa = L.map('map').setView([-14.2, -51.9], 4);
 
-    const COL_NOME = "Nome EC";
-    const COL_UF = "UF EC";
-    const COL_CIDADE = "Cidade EC";
-    const COL_LOGRADOURO = "Logradouro EC";
-    const COL_DESVIO = "Desvio de Preço (%)";
-    const COL_BLACKLIST = "Blacklist";
-    const COL_PRECO = "Preço por Litro";
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 18,
+}).addTo(mapa);
 
-    const loader = document.getElementById("loader");
+let marcadores = [];
+let dadosCSV = [];
 
-    function mostrarLoader(show) {
-      loader.style.display = show ? "block" : "none";
-    }
+/* ==== LER O CSV DO REPOSITÓRIO ==== */
+fetch("postos-mapa.csv")
+    .then(res => res.text())
+    .then(csv => processarCSV(csv));
 
-    // Classificar baseado na coluna Blacklist
-    function classificarStatus(blacklistStr) {
-      if (!blacklistStr) return "desconhecido";
-      blacklistStr = String(blacklistStr).trim();
+/* PARSE CSV */
+function processarCSV(texto) {
+    const linhas = texto.split("\n").slice(1);
 
-      if (blacklistStr.includes("Muito acima")) return "bloqueado";
-      if (blacklistStr.includes("Acima da média")) return "bloqueado";
+    dadosCSV = linhas.map(l => {
+        const c = l.split(",");
 
-      if (blacklistStr.includes("Dentro da média")) return "dentro";
-
-      if (blacklistStr.includes("Abaixo da média")) return "abaixo";
-
-      return "desconhecido";
-    }
-
-    // Utilidades de número com 2 casas decimais
-    function parsePreco(valor) {
-      if (valor === null || valor === undefined || valor === "") return null;
-      let s = String(valor).replace(/[R$\s]/g, "").trim();
-      // Se tiver vírgula e não tiver ponto, supõe formato BR
-      if (s.indexOf(",") >= 0 && s.indexOf(".") === -1) {
-        s = s.replace(".", "").replace(",", ".");
-      }
-      const n = parseFloat(s);
-      return isNaN(n) ? null : n;
-    }
-
-    function parseDesvio(valor) {
-      if (valor === null || valor === undefined || valor === "") return null;
-      let s = String(valor).replace("%", "").trim();
-      if (s.indexOf(".") >= 0 && s.indexOf(",") >= 0) {
-        s = s.replace(".", "").replace(",", ".");
-      } else if (s.indexOf(",") >= 0) {
-        s = s.replace(",", ".");
-      }
-      const n = parseFloat(s);
-      return isNaN(n) ? null : n;
-    }
-
-    function format2(n) {
-      return (n !== null && !isNaN(n)) ? n.toFixed(2) : "";
-    }
-
-    // ==========================
-    // LEITURA DO CSV
-    // ==========================
-    let postos = [];
-    let map, markersLayer;
-    const geocodeCache = JSON.parse(localStorage.getItem("geocodeCachePostos") || "{}");
-
-    function salvarCache() {
-      localStorage.setItem("geocodeCachePostos", JSON.stringify(geocodeCache));
-    }
-
-    mostrarLoader(true);
-
-    Papa.parse(CSV_FILE, {
-      download: true,
-      header: true,
-      skipEmptyLines: true,
-      complete: function (results) {
-        postos = results.data
-          .map(row => {
-            const nome = row[COL_NOME];
-            const uf = row[COL_UF];
-            const cidade = row[COL_CIDADE];
-            const logradouro = row[COL_LOGRADOURO];
-            const blacklist = row[COL_BLACKLIST];
-            const preco = row[COL_PRECO];
-            const desvio = row[COL_DESVIO];
-            const status = classificarStatus(blacklist);
-
-            if (!nome || !uf || !cidade || !logradouro) {
-              return null;
-            }
-
-            return {
-              nome: String(nome).trim(),
-              uf: String(uf).trim(),
-              cidade: String(cidade).trim(),
-              logradouro: String(logradouro).trim(),
-              blacklist: blacklist,
-              status: status,
-              precoRaw: preco,
-              desvioRaw: desvio,
-              precoNum: parsePreco(preco),
-              desvioNum: parseDesvio(desvio)
-            };
-          })
-          .filter(x => x !== null);
-
-        inicializarFiltros();
-        inicializarMapa();
-        atualizarInterface().then(() => mostrarLoader(false));
-      },
-      error: function (err) {
-        console.error("Erro ao ler CSV:", err);
-        mostrarLoader(false);
-        alert("Erro ao carregar o CSV. Verifique se o arquivo 'postos-mapa.csv' está na mesma pasta do HTML.");
-      }
+        return {
+            nome: c[0],
+            endereco: c[1],
+            cidade: c[2],
+            uf: c[3],
+            media: parseFloat(c[4]),
+            preco: parseFloat(c[5]),
+            status: c[6], // acima / abaixo / media / bloqueado
+            lat: parseFloat(c[7]),
+            lng: parseFloat(c[8])
+        };
     });
 
-    // ==========================
-    // FILTROS
-    // ==========================
-    function inicializarFiltros() {
-      const ufSelect = document.getElementById("filtroUF");
-      const cidadeSelect = document.getElementById("filtroCidade");
+    preencherFiltros();
+    atualizarInterface();
+}
 
-      const ufs = Array.from(new Set(postos.map(p => p.uf))).sort();
-      ufs.forEach(uf => {
-        const opt = document.createElement("option");
-        opt.value = uf;
-        opt.textContent = uf;
-        ufSelect.appendChild(opt);
-      });
+/* FILTROS DINÂMICOS */
+function preencherFiltros() {
+    let estados = [...new Set(dadosCSV.map(p => p.uf))].sort();
+    let cidades = [...new Set(dadosCSV.map(p => p.cidade))].sort();
 
-      ufSelect.addEventListener("change", () => {
-        preencherCidades();
-        atualizarInterface();
-      });
-      cidadeSelect.addEventListener("change", atualizarInterface);
+    const filtroUF = document.getElementById("filtroUF");
+    const filtroCidade = document.getElementById("filtroCidade");
 
-      preencherCidades();
-    }
+    filtroUF.innerHTML = "<option value=''>Todos</option>";
+    estados.forEach(uf => filtroUF.innerHTML += `<option>${uf}</option>`);
 
-    function preencherCidades() {
-      const uf = document.getElementById("filtroUF").value;
-      const cidadeSelect = document.getElementById("filtroCidade");
-      cidadeSelect.innerHTML = '<option value="">Todas</option>';
+    filtroCidade.innerHTML = "<option value=''>Todas</option>";
+    cidades.forEach(c => filtroCidade.innerHTML += `<option>${c}</option>`);
 
-      const cidades = Array.from(new Set(
-        postos
-          .filter(p => !uf || p.uf === uf)
-          .map(p => p.cidade)
-      )).sort();
+    filtroUF.onchange =
+    filtroCidade.onchange =
+    document.getElementById("filtroNome").oninput =
+    document.getElementById("filtroEndereco").oninput =
+        atualizarInterface;
+}
 
-      cidades.forEach(cidade => {
-        const opt = document.createElement("option");
-        opt.value = cidade;
-        opt.textContent = cidade;
-        cidadeSelect.appendChild(opt);
-      });
-    }
+/* APLICAR FILTROS */
+function atualizarInterface() {
 
-    function filtrarPostos() {
-      const uf = document.getElementById("filtroUF").value;
-      const cidade = document.getElementById("filtroCidade").value;
+    let uf = filtroUF.value;
+    let cidade = filtroCidade.value.toLowerCase();
+    let nome = filtroNome.value.toLowerCase();
+    let end = filtroEndereco.value.toLowerCase();
 
-      return postos.filter(p =>
-        (!uf || p.uf === uf) &&
-        (!cidade || p.cidade === cidade)
-      );
-    }
+    let filtrados = dadosCSV.filter(p =>
+        (uf === "" || p.uf === uf) &&
+        (cidade === "" || p.cidade.toLowerCase().includes(cidade)) &&
+        (nome === "" || p.nome.toLowerCase().includes(nome)) &&
+        (end === "" || p.endereco.toLowerCase().includes(end))
+    );
 
-    // ==========================
-    // MAPA (Leaflet)
-    // ==========================
-    function inicializarMapa() {
-      map = L.map("map").setView([-15.78, -47.93], 4); // Brasil
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        maxZoom: 18,
-      }).addTo(map);
-      markersLayer = L.layerGroup().addTo(map);
-    }
+    atualizarLista(filtrados);
+    atualizarMapa(filtrados);
+}
 
-    async function geocodeEndereco(posto) {
-      const chave = `${posto.logradouro}, ${posto.cidade} - ${posto.uf}`;
-      if (geocodeCache[chave]) {
-        return geocodeCache[chave];
-      }
+/* LISTA LATERAL */
+function atualizarLista(lista) {
+    const ul = document.getElementById("listaPostos");
+    ul.innerHTML = "";
 
-      const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(chave)}`;
+    lista.forEach(p => {
+        let cor = p.status === "acima" ? "acima" :
+                  p.status === "abaixo" ? "abaixo" :
+                  p.status === "media" ? "media" : "bloqueado";
 
-      try {
-        const resp = await fetch(url, {
-          headers: {
-            "Accept-Language": "pt-BR"
-          }
-        });
-        const data = await resp.json();
-        if (data && data.length > 0) {
-          const lat = parseFloat(data[0].lat);
-          const lon = parseFloat(data[0].lon);
-          const coord = { lat, lon };
-          geocodeCache[chave] = coord;
-          salvarCache();
-          return coord;
-        }
-      } catch (e) {
-        console.error("Erro no geocode:", e);
-      }
-      return null;
-    }
+        ul.innerHTML += `
+            <li class="postoItem">
+                <strong>${p.nome}</strong><br>
+                ${p.endereco}<br>
+                <span class="badge ${cor}">${p.status.toUpperCase()}</span>
+            </li>
+        `;
+    });
+}
 
-    async function atualizarMapa(postosFiltrados) {
-      markersLayer.clearLayers();
-      if (postosFiltrados.length === 0) return;
+/* MAPA */
+function atualizarMapa(lista) {
+    marcadores.forEach(m => mapa.removeLayer(m));
+    marcadores = [];
 
-      const bounds = [];
+    lista.forEach(p => {
+        if (!p.lat || !p.lng) return;
 
-      // geocodificação sequencial pra não abusar da API
-      for (const posto of postosFiltrados) {
-        const coord = await geocodeEndereco(posto);
-        if (!coord) continue;
+        let cor = p.status === "acima" ? "red" :
+                  p.status === "abaixo" ? "green" :
+                  p.status === "media" ? "blue" : "gray";
 
-        const popupParts = [];
-        popupParts.push(`<b>${posto.nome}</b>`);
-        popupParts.push(`${posto.logradouro}`);
-        popupParts.push(`${posto.cidade} - ${posto.uf}`);
-        if (posto.blacklist) popupParts.push(`<small>${posto.blacklist}</small>`);
-        if (posto.precoNum !== null) popupParts.push(`<small>Preço: R$ ${format2(posto.precoNum)}</small>`);
-        if (posto.desvioNum !== null) popupParts.push(`<small>Desvio: ${format2(posto.desvioNum)}%</small>`);
+        let marker = L.circleMarker([p.lat, p.lng], {
+            radius: 8,
+            fillColor: cor,
+            color: "#001059",
+            weight: 2,
+            fillOpacity: 0.8
+        }).addTo(mapa);
 
-        const marker = L.marker([coord.lat, coord.lon]).addTo(markersLayer);
-        marker.bindPopup(popupParts.join("<br>"));
-        bounds.push([coord.lat, coord.lon]);
-      }
+        marker.bindPopup(`
+            <strong>${p.nome}</strong><br>
+            ${p.endereco}<br>
+            Cidade: ${p.cidade} - ${p.uf}<br>
+            Preço: R$ ${p.preco.toFixed(2)}<br>
+            Média: R$ ${p.media.toFixed(2)}<br>
+            <span style="color:${cor};font-weight:bold">${p.status.toUpperCase()}</span>
+        `);
 
-      if (bounds.length > 0) {
-        map.fitBounds(bounds, { padding: [30, 30] });
-      }
-    }
+        marcadores.push(marker);
+    });
+}
 
-    // ==========================
-    // LISTAS
-    // ==========================
-    function preencherListas(postosFiltrados) {
-      const ulBloq = document.getElementById("listaBloqueados");
-      const ulDentro = document.getElementById("listaDentro");
-      const ulAbaixo = document.getElementById("listaAbaixo");
-      const countBloq = document.getElementById("countBloq");
-      const countDentro = document.getElementById("countDentro");
-      const countAbaixo = document.getElementById("countAbaixo");
-
-      ulBloq.innerHTML = "";
-      ulDentro.innerHTML = "";
-      ulAbaixo.innerHTML = "";
-
-      let cBloq = 0, cDentro = 0, cAbaixo = 0;
-
-      const adicionaLi = (ul, posto) => {
-        const li = document.createElement("li");
-
-        const precoStr = posto.precoNum !== null ? `Preço: R$ ${format2(posto.precoNum)}` : "";
-        const desvioStr = posto.desvioNum !== null ? `Desvio: ${format2(posto.desvioNum)}%` : "";
-
-        li.innerHTML =
-          `<div class="posto-nome">${posto.nome}</div>` +
-          `<div class="posto-det">${posto.cidade}/${posto.uf} – ${posto.logradouro}</div>` +
-          (posto.blacklist ? `<div class="posto-det">${posto.blacklist}</div>` : "") +
-          (precoStr ? `<div class="posto-det">${precoStr}</div>` : "") +
-          (desvioStr ? `<div class="posto-det">${desvioStr}</div>` : "");
-        ul.appendChild(li);
-      };
-
-      postosFiltrados.forEach(p => {
-        if (p.status === "bloqueado") {
-          adicionaLi(ulBloq, p);
-          cBloq++;
-        } else if (p.status === "dentro") {
-          adicionaLi(ulDentro, p);
-          cDentro++;
-        } else if (p.status === "abaixo") {
-          adicionaLi(ulAbaixo, p);
-          cAbaixo++;
-        }
-      });
-
-      countBloq.textContent = `(${cBloq})`;
-      countDentro.textContent = `(${cDentro})`;
-      countAbaixo.textContent = `(${cAbaixo})`;
-    }
-
-    // ==========================
-    // ATUALIZAÇÃO COMPLETA
-    // ==========================
-    async function atualizarInterface() {
-      mostrarLoader(true);
-      const filtrados = filtrarPostos();
-      preencherListas(filtrados);
-      await atualizarMapa(filtrados);
-      mostrarLoader(false);
-    }
-  </script>
+</script>
 </body>
 </html>
