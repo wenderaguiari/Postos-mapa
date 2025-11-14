@@ -425,38 +425,96 @@
       }
     }
 
-    async function atualizarMapa(lista) {
-      markersLayer.clearLayers();
+  async function atualizarMapa(lista) {
+  markersLayer.clearLayers();
 
-      const abaixo = lista
-        .filter((p) => p.status === "abaixo" || p.status === "media")
-        .sort((a, b) => a.precoNum - b.precoNum)
-        .slice(0, 10);
+  const uf = document.getElementById("filtroUF").value;
+  const cidade = document.getElementById("filtroCidade").value;
 
-      // 1) Adiciona marcadores normalmente (10 mais baratos)
-      for (const p of abaixo) {
-        const qPosto = `${p.endereco}, ${p.cidade}, ${p.uf}, Brasil`;
-        const coordsPosto = await geocodificar(qPosto);
-        if (!coordsPosto) continue;
+  // --- ZOOM POR UF OU CIDADE ANTES DE TUDO ---
+  if (cidade) {
+    const qCidade = `${cidade}, ${uf}, Brasil`;
 
-        const [lat, lon] = coordsPosto;
-
-        const m = L.circleMarker([lat, lon], {
-          radius: 6,
-          fillColor: "#22c55e",
-          color: "#14532d",
-          weight: 2,
-          fillOpacity: 0.9,
-        }).addTo(markersLayer);
-
-        m.bindPopup(
-          `<strong>${p.nome}</strong><br>${p.endereco}<br>${p.cidade} - ${p.uf}<br>R$ ${fmt2(
-            p.precoNum
-          )}`
-        );
-
-        p._marker = m;
+    if (!geocodeCache[qCidade]) {
+      const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(qCidade)}`;
+      try {
+        const r = await fetch(url);
+        const d = await r.json();
+        if (d.length) {
+          geocodeCache[qCidade] = [parseFloat(d[0].lat), parseFloat(d[0].lon)];
+        }
+      } catch (e) {
+        console.log("Erro ao geocodificar cidade:", cidade);
       }
+    }
+
+    if (geocodeCache[qCidade]) {
+      map.setView(geocodeCache[qCidade], 12);
+    }
+
+  } else if (uf) {
+    const qUF = `${uf}, Brasil`;
+
+    if (!geocodeCache[qUF]) {
+      const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(qUF)}`;
+      try {
+        const r = await fetch(url);
+        const d = await r.json();
+        if (d.length) {
+          geocodeCache[qUF] = [parseFloat(d[0].lat), parseFloat(d[0].lon)];
+        }
+      } catch (e) {
+        console.log("Erro ao geocodificar UF:", uf);
+      }
+    }
+
+    if (geocodeCache[qUF]) {
+      map.setView(geocodeCache[qUF], 6);
+    }
+  }
+
+  // --- MARCADORES (10 mais baratos) ---
+  const abaixo = lista
+    .filter(p => p.status === "abaixo" || p.status === "media")
+    .sort((a, b) => a.precoNum - b.precoNum)
+    .slice(0, 10);
+
+  for (const p of abaixo) {
+    const q = `${p.endereco}, ${p.cidade} - ${p.uf}`;
+
+    if (!geocodeCache[q]) {
+      const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(q)}`;
+      try {
+        const r = await fetch(url);
+        const d = await r.json();
+        if (!d.length) continue;
+
+        geocodeCache[q] = [parseFloat(d[0].lat), parseFloat(d[0].lon)];
+
+      } catch (e) {
+        console.error("Erro ao geocodificar:", q);
+        continue;
+      }
+    }
+
+    const [lat, lon] = geocodeCache[q];
+
+    const m = L.circleMarker([lat, lon], {
+      radius: 6,
+      fillColor: "#22c55e",
+      color: "#14532d",
+      weight: 2,
+      fillOpacity: 0.9
+    }).addTo(markersLayer);
+
+    m.bindPopup(
+      `<strong>${p.nome}</strong><br>${p.endereco}<br>${p.cidade} - ${p.uf}<br>R$ ${fmt2(p.precoNum)}`
+    );
+
+    p._marker = m;
+  }
+}
+
 
       // 2) CONTROLE DE ZOOM BASEADO EM UF / CIDADE (INDEPENDENTE DOS MARCADORES)
       const uf = document.getElementById("filtroUF").value;
