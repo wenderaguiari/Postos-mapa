@@ -1,936 +1,420 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8" />
-  <title>Mapa de Postos - Alloha Frotas</title>
+  <meta charset="UTF-8" />
+  <title>Painel de Postos - Alloha Fibra</title>
 
-  <!-- Fonte parecida com o Power BI -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600&display=swap" rel="stylesheet" />
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-  <!-- PapaParse para ler o CSV direto do GitHub -->
+  <!-- PapaParse -->
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 
   <style>
-    :root {
-      --azul-escuro: #001059;
-      --azul-medio: #102a83;
-      --azul-claro: #e4ebff;
-      --verde: #48ef6c;
-      --cinza-bg: #f6f8fb;
-      --cinza-borda: #dde2f2;
-      --texto-principal: #111827;
-      --texto-suave: #6b7280;
-      --vermelho: #ef4444;
-      --laranja: #f97316;
-      --amarelo: #facc15;
-      --azul-status: #3b82f6;
-    }
-
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
-      font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-      background: var(--cinza-bg);
-      color: var(--texto-principal);
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: #f3f6fb;
+      color: #001059;
       display: flex;
-      flex-direction: column;
-      min-height: 100vh;
+      height: 100vh;
+      overflow: hidden;
+      padding-top: 60px; /* espaço p/ contadores */
     }
 
-    /* HEADER */
-    header {
-      background: var(--azul-escuro);
-      color: #fff;
-      padding: 10px 24px;
+    /* CONTADORES DO TOPO */
+    #topCounters {
+      width: 100%;
+      background: #ffffff;
+      padding: 10px 20px;
       display: flex;
+      gap: 12px;
       align-items: center;
-      justify-content: space-between;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
-      position: sticky;
+      border-bottom: 2px solid #001059;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      position: fixed;
       top: 0;
+      left: 0;
+      z-index: 40;
+    }
+
+    .tc-item {
+      background: #f3f4f6;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 13px;
+      border: 1px solid #d1d5db;
+    }
+
+    /* SIDEBAR */
+    .sidebar {
+      width: 260px;
+      background: #001059;
+      color: #f9fafb;
+      padding: 20px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      box-shadow: 4px 0 10px rgba(0,0,0,0.25);
       z-index: 10;
     }
 
-    .header-left {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
+    .sidebar-logo { display: flex; justify-content: center; }
+    .sidebar-logo img { max-width: 160px; }
 
-    .logo {
-      height: 40px;
-      width: auto;
-      object-fit: contain;
-    }
+    .sidebar-title-main { font-size: 18px; font-weight: 600; }
+    .sidebar-title-sub { font-size: 13px; opacity: 0.9; }
+    .sidebar-info { font-size: 11px; opacity: 0.8; }
 
-    .titulo-header {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-
-    .titulo-header h1 {
-      margin: 0;
-      font-size: 18px;
-      font-weight: 600;
-    }
-
-    .titulo-header span {
-      font-size: 13px;
-      color: #c7d2fe;
-    }
-
-    .header-right {
-      font-size: 13px;
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-      text-align: right;
-    }
-
-    .tag-versao {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
+    .tag {
+      font-size: 11px;
       padding: 3px 8px;
       border-radius: 999px;
-      background: rgba(72, 239, 108, 0.15);
-      color: #bbf7d0;
-      font-size: 11px;
-      align-self: flex-end;
+      border: 1px solid #48ef6c;
+      color: #48ef6c;
+      background: rgba(72,239,108,0.15);
     }
 
-    /* CONTEÚDO PRINCIPAL */
-    main {
-      flex: 1;
-      padding: 16px 20px 20px;
+    /* PAINEL CENTRAL */
+    .main-panel {
+      width: 420px;
+      background: #ffffff;
+      padding: 16px 18px;
+      border-right: 3px solid #001059;
       display: flex;
       flex-direction: column;
-      gap: 12px;
-      max-width: 1400px;
-      margin: 0 auto;
+      gap: 10px;
+      overflow-y: auto;
+    }
+
+    label { font-size: 12px; font-weight: 600; margin-bottom: 3px; color: #111827; }
+
+    select, input[type="text"] {
       width: 100%;
-    }
-
-    /* CARD DE FILTROS */
-    .card {
-      background: #ffffff;
-      border-radius: 16px;
-      padding: 14px 16px;
-      box-shadow: 0 4px 10px rgba(15, 23, 42, 0.08);
-      border: 1px solid var(--cinza-borda);
-    }
-
-    .card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 10px;
-      gap: 10px;
-    }
-
-    .card-header h2 {
-      margin: 0;
-      font-size: 16px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 2px 8px;
+      padding: 8px 10px;
       border-radius: 999px;
-      background: var(--azul-claro);
-      color: var(--azul-escuro);
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-    }
-
-    .filtros {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-
-    .campo {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      min-width: 150px;
-      flex: 1;
-    }
-
-    .campo label {
-      font-size: 12px;
-      color: var(--texto-suave);
-    }
-
-    select,
-    input[type="text"] {
-      padding: 7px 10px;
-      border-radius: 8px;
-      border: 1px solid var(--cinza-borda);
+      border: 2px solid #001059;
+      background: #f9fafb;
       font-size: 13px;
-      outline: none;
+    }
+
+    select:focus, input:focus {
+      border-color: #48ef6c;
+      background: #fff;
+      box-shadow: 0 0 0 2px rgba(72,239,108,0.25);
+    }
+
+    .filtros { display: flex; flex-direction: column; gap: 10px; }
+
+    /* LISTAS E TABELAS */
+    .section-card {
+      margin-top: 12px;
       background: #f9fafb;
-      transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
-    }
-
-    select:focus,
-    input[type="text"]:focus {
-      border-color: var(--azul-escuro);
-      box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.35);
-      background: #ffffff;
-    }
-
-    .resumo-contagem {
-      font-size: 12px;
-      color: var(--texto-suave);
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      align-items: center;
-    }
-
-    .resumo-contagem span {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      padding: 2px 8px;
-      border-radius: 999px;
-      background: #f9fafb;
-      border: 1px solid var(--cinza-borda);
-      font-size: 11px;
-    }
-
-    /* GRID PRINCIPAL: TABELAS + MAPA */
-    .grid {
-      display: grid;
-      grid-template-columns: 2fr 2fr 2.4fr;
-      gap: 12px;
-      align-items: stretch;
-    }
-
-    @media (max-width: 1100px) {
-      .grid {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    .card-titulo {
-      font-size: 14px;
-      font-weight: 600;
-      margin-bottom: 6px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 6px;
-    }
-
-    .card-subtitulo {
-      font-size: 11px;
-      color: var(--texto-suave);
-      margin-bottom: 8px;
-    }
-
-    .badge-status {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      padding: 2px 7px;
-      border-radius: 999px;
-      font-size: 11px;
-      font-weight: 600;
-    }
-
-    .badge-bloqueado {
-      background: #fef2f2;
-      color: #b91c1c;
-      border: 1px solid #fecaca;
-    }
-
-    .badge-abaixo {
-      background: #eff6ff;
-      color: #1d4ed8;
-      border: 1px solid #bfdbfe;
-    }
-
-    .badge-media {
-      background: #ecfdf3;
-      color: #15803d;
-      border: 1px solid #bbf7d0;
-    }
-
-    .badge-acima {
-      background: #fff7ed;
-      color: #c2410c;
-      border: 1px solid #fed7aa;
-    }
-
-    .badge-muito-acima {
-      background: #fef2f2;
-      color: #b91c1c;
-      border: 1px solid #fecaca;
-    }
-
-    .tabela-wrapper {
       border-radius: 12px;
-      border: 1px solid var(--cinza-borda);
-      overflow: hidden;
-      background: #ffffff;
-      max-height: 420px;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .tabela-scroll {
-      overflow: auto;
-      flex: 1;
+      border: 1px solid #e5e7eb;
+      padding: 10px;
+      box-shadow: 0 1px 3px rgba(15,23,42,0.08);
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 12px;
+      font-size: 11px;
+      margin-top: 6px;
     }
 
-    thead {
-      background: #f9fafb;
-      position: sticky;
-      top: 0;
-      z-index: 1;
+    table thead {
+      background: #001059;
+      color: #f9fafb;
     }
 
-    th,
-    td {
-      padding: 6px 8px;
+    th, td {
+      padding: 6px 4px;
+      border: 1px solid #e5e7eb;
       text-align: left;
-      border-bottom: 1px solid #eef2ff;
-    }
-
-    th {
-      font-weight: 600;
-      font-size: 11px;
-      text-transform: uppercase;
-      color: var(--texto-suave);
-      letter-spacing: 0.03em;
-    }
-
-    tbody tr {
-      cursor: pointer;
-      transition: background 0.15s;
-    }
-
-    tbody tr:nth-child(even) {
-      background: #f9fafb;
-    }
-
-    tbody tr:hover {
-      background: #e0ecff;
-    }
-
-    tbody tr.selecionado {
-      background: #dbeafe !important;
-    }
-
-    .col-nome {
-      min-width: 140px;
-    }
-
-    .col-endereco {
-      min-width: 180px;
-    }
-
-    .col-valores {
-      text-align: right;
-      white-space: nowrap;
-    }
-
-    .tag-pequena {
-      font-size: 11px;
-      color: var(--texto-suave);
     }
 
     /* MAPA */
-    .map-card {
-      background: #ffffff;
-      border-radius: 16px;
-      padding: 12px;
-      box-shadow: 0 4px 10px rgba(15, 23, 42, 0.08);
-      border: 1px solid var(--cinza-borda);
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      min-height: 320px;
-    }
-
-    .map-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 8px;
-    }
-
-    .map-info {
-      display: flex;
-      flex-direction: column;
-      gap: 3px;
-    }
-
-    .map-nome {
-      font-size: 13px;
-      font-weight: 600;
-    }
-
-    .map-endereco {
-      font-size: 11px;
-      color: var(--texto-suave);
-    }
-
-    .map-cta {
-      font-size: 11px;
-      color: var(--azul-escuro);
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      align-items: flex-end;
-    }
-
-    .btn-mapa {
-      border: none;
-      border-radius: 999px;
-      padding: 6px 10px;
-      font-size: 11px;
-      font-weight: 600;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: var(--azul-escuro);
-      color: #ffffff;
-      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.25);
-    }
-
-    .btn-mapa:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-      box-shadow: none;
-    }
-
-    .map-frame-wrapper {
-      border-radius: 14px;
-      overflow: hidden;
-      border: 1px solid var(--cinza-borda);
+    .map-panel {
       flex: 1;
-      min-height: 240px;
-    }
-
-    iframe {
-      width: 100%;
-      height: 100%;
-      border: none;
-      display: block;
-    }
-
-    .map-placeholder {
-      width: 100%;
-      height: 100%;
+      padding: 16px;
       display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 12px;
-      color: var(--texto-suave);
-      background: repeating-linear-gradient(
-        45deg,
-        #f3f4ff,
-        #f3f4ff 10px,
-        #e5e7eb 10px,
-        #e5e7eb 20px
-      );
+      flex-direction: column;
     }
 
-    .status-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 999px;
-      display: inline-block;
+    .map-card {
+      flex: 1;
+      background: #fff;
+      border-radius: 16px;
+      border: 1px solid #e5e7eb;
+      padding: 10px;
     }
 
-    .dot-bloqueado { background: #ef4444; }
-    .dot-muito-acima { background: #b91c1c; }
-    .dot-acima { background: #f97316; }
-    .dot-media { background: #22c55e; }
-    .dot-abaixo { background: #3b82f6; }
+    #map { flex: 1; border-radius: 12px; }
   </style>
 </head>
 
 <body>
-  <header>
-    <div class="header-left">
-      <!-- ajuste o caminho da logo branca -->
-      <img src="logo_alloha_branco.png" alt="Alloha Fibra" class="logo" />
-      <div class="titulo-header">
-        <h1>Mapa e Performance de Postos</h1>
-        <span>Filtros por cidade, UF, nome e endereço • Destaque para postos abaixo da média</span>
-      </div>
+
+<!-- CONTADORES -->
+<div id="topCounters">
+  <span class="tc-item" id="tc-total"></span>
+  <span class="tc-item" id="tc-bloq"></span>
+  <span class="tc-item" id="tc-abaixo"></span>
+  <span class="tc-item" id="tc-media"></span>
+  <span class="tc-item" id="tc-acima"></span>
+  <span class="tc-item" id="tc-muito"></span>
+</div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo"><img src="Imagem1.png"></div>
+  <div>
+    <div class="sidebar-title-main">Painel de Postos</div>
+    <div class="sidebar-title-sub">Desvio de Preço & Classificação</div>
+    <div class="sidebar-info">
+      Foco em <strong>postos abaixo da média</strong> no mapa.
     </div>
-    <div class="header-right">
-      <div class="tag-versao">
-        <span>●</span>
-        <span>Versão piloto</span>
-      </div>
-      <span>Uso interno • Alloha Frotas</span>
+    <span class="tag">Alloha Frotas · Uso interno</span>
+  </div>
+</aside>
+
+<!-- PAINEL CENTRAL -->
+<main class="main-panel">
+
+  <h2>Filtros</h2>
+  <small>Use para localizar rapidamente os postos.</small>
+
+  <div class="filtros">
+
+    <div>
+      <label>UF</label>
+      <select id="filtroUF"><option value="">Todas</option></select>
     </div>
-  </header>
 
-  <main>
-    <!-- FILTROS -->
-    <section class="card">
-      <div class="card-header">
-        <h2>
-          Postos de Abastecimento
-          <span class="pill">Filtro dinâmico</span>
-        </h2>
-        <div class="resumo-contagem" id="resumoContagem">
-          <!-- preenchido via JS -->
-        </div>
-      </div>
+    <div>
+      <label>Cidade</label>
+      <select id="filtroCidade"><option value="">Todas</option></select>
+    </div>
 
-      <div class="filtros">
-        <div class="campo">
-          <label for="filtroUf">UF</label>
-          <select id="filtroUf">
-            <option value="">Todas</option>
-          </select>
-        </div>
-        <div class="campo">
-          <label for="filtroCidade">Cidade</label>
-          <select id="filtroCidade">
-            <option value="">Todas</option>
-          </select>
-        </div>
-        <div class="campo">
-          <label for="filtroNome">Pesquisar por nome do posto</label>
-          <input type="text" id="filtroNome" placeholder="Ex: POSTO AEROPORTO" />
-        </div>
-        <div class="campo">
-          <label for="filtroEndereco">Pesquisar por logradouro</label>
-          <input type="text" id="filtroEndereco" placeholder="Ex: AV. CASTELO BRANCO" />
-        </div>
-      </div>
-    </section>
+    <div>
+      <label>Tipo de Combustível</label>
+      <select id="filtroComb"><option value="">Todos</option></select>
+    </div>
 
-    <!-- GRID PRINCIPAL: BLOQUEADOS / TABELA / MAPA -->
-    <section class="grid">
-      <!-- COLUNA 1: BLOQUEADOS -->
-      <section class="card">
-        <div class="card-titulo">
-          <span>Postos Bloqueados</span>
-          <span class="badge-status badge-bloqueado">
-            <span class="status-dot dot-bloqueado"></span>
-            Bloqueado
-          </span>
-        </div>
-        <div class="card-subtitulo">
-          Postos sinalizados para <strong>não abastecer</strong>.
-        </div>
-        <div class="tabela-wrapper">
-          <div class="tabela-scroll">
-            <table>
-              <thead>
-                <tr>
-                  <th>Nome</th>
-                  <th>Cidade / UF</th>
-                  <th>Endereço</th>
-                  <th class="col-valores">Desvio</th>
-                </tr>
-              </thead>
-              <tbody id="tbodyBloqueados"></tbody>
-            </table>
-          </div>
-        </div>
-      </section>
+    <div>
+      <label>Nome do posto</label>
+      <input type="text" id="filtroNome">
+    </div>
 
-      <!-- COLUNA 2: DEMAIS CLASSIFICAÇÕES -->
-      <section class="card">
-        <div class="card-titulo">
-          <span>Postos por classificação</span>
-        </div>
-        <div class="card-subtitulo">
-          <span class="tag-pequena">
-            Clique em um posto para visualizar no mapa.  
-            No mapa, priorizamos <strong>postos abaixo da média</strong>.
-          </span>
-        </div>
-        <div class="tabela-wrapper">
-          <div class="tabela-scroll">
-            <table>
-              <thead>
-                <tr>
-                  <th>Nome</th>
-                  <th>Status</th>
-                  <th>Cidade / UF</th>
-                  <th class="col-valores">Desvio</th>
-                  <th class="col-valores">R$/L</th>
-                </tr>
-              </thead>
-              <tbody id="tbodyOutros"></tbody>
-            </table>
-          </div>
-        </div>
-      </section>
+    <div>
+      <label>Endereço</label>
+      <input type="text" id="filtroEndereco">
+    </div>
+  </div>
 
-      <!-- COLUNA 3: MAPA -->
-      <section class="map-card">
-        <div class="map-header">
-          <div class="map-info">
-            <div class="card-titulo">
-              <span>Mapa do posto selecionado</span>
-            </div>
-            <div class="map-nome" id="mapNome">
-              Nenhum posto selecionado
-            </div>
-            <div class="map-endereco" id="mapEndereco">
-              Use os filtros e clique em um posto (preferencialmente <strong>abaixo da média</strong>) para visualizar o local no mapa.
-            </div>
-          </div>
-          <div class="map-cta">
-            <button class="btn-mapa" id="btnAbrirMaps" disabled>
-              Abrir no Google Maps
-            </button>
-            <span class="tag-pequena">
-              No celular, o aplicativo de mapas será aberto automaticamente.
-            </span>
-          </div>
-        </div>
-        <div class="map-frame-wrapper">
-          <div class="map-placeholder" id="mapPlaceholder">
-            Nenhum posto selecionado.
-          </div>
-          <iframe id="mapFrame" style="display:none;"></iframe>
-        </div>
-      </section>
-    </section>
-  </main>
+  <!-- LISTA ABAIXO E NA MÉDIA -->
+  <section class="section-card">
+    <div class="section-header">
+      <strong>Abaixo / Média</strong>
+      <span id="countLista">(0)</span>
+    </div>
+    <div id="listaPostos"></div>
+  </section>
 
-  <script>
-    // -----------------------------
-    // CONFIGURAÇÃO
-    // -----------------------------
-    const CSV_FILE = "postos-mapa.csv";
+  <!-- TABELA ACIMA E MUITO ACIMA -->
+  <section class="section-card">
+    <div class="section-header">
+      <strong>Acima / Muito acima</strong>
+      <span id="countTabela">(0)</span>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Posto</th>
+          <th>Cidade/UF</th>
+          <th>Comb.</th>
+          <th>Desvio</th>
+          <th>Preço</th>
+          <th>Grupo</th>
+        </tr>
+      </thead>
+      <tbody id="tabelaAcima"></tbody>
+    </table>
+  </section>
+</main>
 
-    let postos = [];
-    let postosFiltrados = [];
-    let postoSelecionado = null;
+<!-- MAPA -->
+<section class="map-panel">
+  <div class="map-card">
+    <h3>Mapa – Postos abaixo da média</h3>
+    <div id="map"></div>
+  </div>
+</section>
 
-    const filtroUf = document.getElementById("filtroUf");
-    const filtroCidade = document.getElementById("filtroCidade");
-    const filtroNome = document.getElementById("filtroNome");
-    const filtroEndereco = document.getElementById("filtroEndereco");
 
-    const tbodyBloqueados = document.getElementById("tbodyBloqueados");
-    const tbodyOutros = document.getElementById("tbodyOutros");
-    const resumoContagem = document.getElementById("resumoContagem");
+<script>
+const CSV_FILE = "postos-mapa.csv";
+let postos = [];
+let map, markersLayer;
 
-    const mapNome = document.getElementById("mapNome");
-    const mapEndereco = document.getElementById("mapEndereco");
-    const mapFrame = document.getElementById("mapFrame");
-    const mapPlaceholder = document.getElementById("mapPlaceholder");
-    const btnAbrirMaps = document.getElementById("btnAbrirMaps");
+function classificar(black) {
+  if (!black) return "desconhecido";
+  if (black.includes("Abaixo")) return "abaixo";
+  if (black.includes("Dentro")) return "media";
+  if (black.includes("Acima da média")) return "acima";
+  if (black.includes("Muito acima")) return "muito";
+  return "desconhecido";
+}
 
-    // -----------------------------
-    // NORMALIZAR TEXTO
-    // -----------------------------
-    function norm(str) {
-      return (str || "").toString().trim();
-    }
+Papa.parse(CSV_FILE, {
+  download: true,
+  header: true,
+  complete: (res) => {
+    postos = res.data.map(r => ({
+      nome: r["Nome EC"],
+      uf: r["UF EC"],
+      cidade: r["Cidade EC"],
+      endereco: r["Logradouro EC"],
+      combustivel: r["Combustível"] || "",
+      blacklist: r["Blacklist"],
+      preco: parseFloat((r["Preço por Litro"]+"").replace(",", ".")) || null,
+      desvio: parseFloat((r["Desvio de Preço (%)"]+"").replace("%","").replace(",", ".")) || null,
+      status: classificar(r["Blacklist"])
+    })).filter(x => x.nome);
 
-    // Identifica grupo com base no texto da coluna "Blacklist"
-    function classificarStatus(texto) {
-      const t = (texto || "").toString().toLowerCase();
+    inicializarFiltros();
+    inicializarMapa();
+    atualizarInterface();
+  }
+});
 
-      if (t.includes("bloque")) return "bloqueado";
-      if (t.includes("muito acima")) return "muito_acima";
-      if (t.includes("acima")) return "acima";
-      if (t.includes("abaixo")) return "abaixo";
-      if (t.includes("média") || t.includes("media")) return "na_media";
-      return "indefinido";
-    }
+function inicializarMapa() {
+  map = L.map("map").setView([-15.78, -47.93], 4);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
+  markersLayer = L.layerGroup().addTo(map);
+}
 
-    function formatarDesvio(valor) {
-      if (!valor) return "";
-      let v = valor.toString().replace("%", "").replace(",", ".").trim();
-      const num = parseFloat(v);
-      if (isNaN(num)) return valor;
-      return num.toFixed(2) + " %";
-    }
+function inicializarFiltros() {
+  const ufSel = document.getElementById("filtroUF");
+  const cidSel = document.getElementById("filtroCidade");
+  const combSel = document.getElementById("filtroComb");
 
-    function formatarPreco(valor) {
-      if (valor === null || valor === undefined || valor === "") return "";
-      const num = parseFloat(valor.toString().replace(",", "."));
-      if (isNaN(num)) return valor;
-      return "R$ " + num.toFixed(2);
-    }
+  [...new Set(postos.map(p => p.uf))].sort().forEach(u => {
+    ufSel.innerHTML += `<option>${u}</option>`;
+  });
 
-    // -----------------------------
-    // CARREGAR CSV
-    // -----------------------------
-    Papa.parse(CSV_FILE, {
-      download: true,
-      header: true,
-      skipEmptyLines: true,
-      complete: function(results) {
-        postos = results.data.map((row, index) => {
-          const nome = norm(row["Nome EC"] || row["Nome"]);
-          const uf = norm(row["UF EC"] || row["UF"]);
-          const cidade = norm(row["Cidade EC"] || row["Cidade"]);
-          const logradouro = norm(row["Logradouro EC"] || row["Logradouro"]);
-          const desvio = norm(row["Desvio de Preço (%)"] || row["Desvio"] || row["Desvio (%)"]);
-          const blacklist = norm(row["Blacklist"] || row["Status"] || "");
-          const preco = norm(row["Preço por Litro"] || row["Preço"] || row["Preco"]);
+  [...new Set(postos.map(p => p.cidade))].sort().forEach(c => {
+    cidSel.innerHTML += `<option>${c}</option>`;
+  });
 
-          return {
-            id: index,
-            nome,
-            uf,
-            cidade,
-            logradouro,
-            desvio,
-            blacklist,
-            preco,
-            grupo: classificarStatus(blacklist)
-          };
-        });
+  [...new Set(postos.map(p => p.combustivel))].sort().forEach(c => {
+    if (c) combSel.innerHTML += `<option>${c}</option>`;
+  });
 
-        preencherFiltros();
-        aplicarFiltros();
-      },
-      error: function(err) {
-        console.error("Erro ao carregar CSV:", err);
-        alert("Erro ao carregar o arquivo de postos. Verifique o nome do arquivo e tente novamente.");
-      }
-    });
+  document.querySelectorAll("#filtroUF,#filtroCidade,#filtroComb,#filtroNome,#filtroEndereco")
+    .forEach(el => el.addEventListener("input", atualizarInterface));
+}
 
-    // -----------------------------
-    // FILTROS
-    // -----------------------------
-    function preencherFiltros() {
-      const ufs = [...new Set(postos.map(p => p.uf).filter(Boolean))].sort();
-      const cidades = [...new Set(postos.map(p => p.cidade).filter(Boolean))].sort();
+function filtrar() {
+  const uf = filtroUF.value;
+  const cid = filtroCidade.value;
+  const comb = filtroComb.value;
+  const nome = filtroNome.value.toLowerCase();
+  const end = filtroEndereco.value.toLowerCase();
 
-      ufs.forEach(uf => {
-        const opt = document.createElement("option");
-        opt.value = uf;
-        opt.textContent = uf;
-        filtroUf.appendChild(opt);
-      });
+  return postos.filter(p =>
+    (!uf || p.uf === uf) &&
+    (!cid || p.cidade === cid) &&
+    (!comb || p.combustivel === comb) &&
+    (!nome || p.nome.toLowerCase().includes(nome)) &&
+    (!end || p.endereco.toLowerCase().includes(end))
+  );
+}
 
-      cidades.forEach(c => {
-        const opt = document.createElement("option");
-        opt.value = c;
-        opt.textContent = c;
-        filtroCidade.appendChild(opt);
-      });
-    }
+function atualizarContadores(lista) {
+  document.getElementById("tc-total").textContent = `${lista.length} postos filtrados`;
+  document.getElementById("tc-bloq").textContent  = `Bloqueados: 0`;
+  document.getElementById("tc-abaixo").textContent = `Abaixo: ${lista.filter(p=>p.status==="abaixo").length}`;
+  document.getElementById("tc-media").textContent  = `Na média: ${lista.filter(p=>p.status==="media").length}`;
+  document.getElementById("tc-acima").textContent  = `Acima: ${lista.filter(p=>p.status==="acima").length}`;
+  document.getElementById("tc-muito").textContent  = `Muito acima: ${lista.filter(p=>p.status==="muito").length}`;
+}
 
-    filtroUf.addEventListener("change", aplicarFiltros);
-    filtroCidade.addEventListener("change", aplicarFiltros);
-    filtroNome.addEventListener("input", aplicarFiltros);
-    filtroEndereco.addEventListener("input", aplicarFiltros);
+async function atualizarMapa(lista) {
+  markersLayer.clearLayers();
+  const abaixo = lista.filter(p => p.status === "abaixo").slice(0,80);
+  const bounds = [];
 
-    function aplicarFiltros() {
-      const ufSel = filtroUf.value;
-      const cidadeSel = filtroCidade.value;
-      const nomeBusca = filtroNome.value.toLowerCase();
-      const endBusca = filtroEndereco.value.toLowerCase();
+  for (let p of abaixo) {
+    const q = encodeURIComponent(`${p.endereco}, ${p.cidade} - ${p.uf}`);
+    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${q}`;
 
-      postosFiltrados = postos.filter(p => {
-        if (ufSel && p.uf !== ufSel) return false;
-        if (cidadeSel && p.cidade !== cidadeSel) return false;
-        if (nomeBusca && !p.nome.toLowerCase().includes(nomeBusca)) return false;
-        if (endBusca && !p.logradouro.toLowerCase().includes(endBusca)) return false;
-        return true;
-      });
+    const r = await fetch(url);
+    const js = await r.json();
+    if (!js[0]) continue;
 
-      renderTabelas();
-      atualizarResumo();
-      limparSelecaoMapaSeNecessario();
-    }
+    const lat = js[0].lat, lon = js[0].lon;
+    L.circleMarker([lat, lon], { radius: 7, color:"#14532d", fillColor:"#22c55e", fillOpacity:0.9 })
+      .addTo(markersLayer)
+      .bindPopup(`<strong>${p.nome}</strong><br>${p.endereco}<br>${p.cidade}/${p.uf}`);
 
-    function atualizarResumo() {
-      const total = postosFiltrados.length;
-      const bloqueados = postosFiltrados.filter(p => p.grupo === "bloqueado").length;
-      const abaixo = postosFiltrados.filter(p => p.grupo === "abaixo").length;
-      const naMedia = postosFiltrados.filter(p => p.grupo === "na_media").length;
-      const acima = postosFiltrados.filter(p => p.grupo === "acima").length;
-      const muitoAcima = postosFiltrados.filter(p => p.grupo === "muito_acima").length;
+    bounds.push([lat, lon]);
+  }
 
-      resumoContagem.innerHTML = `
-        <span><strong>${total}</strong> postos filtrados</span>
-        <span><span class="status-dot dot-bloqueado"></span> Bloqueados: <strong>${bloqueados}</strong></span>
-        <span><span class="status-dot dot-abaixo"></span> Abaixo: <strong>${abaixo}</strong></span>
-        <span><span class="status-dot dot-media"></span> Na média: <strong>${naMedia}</strong></span>
-        <span><span class="status-dot dot-acima"></span> Acima: <strong>${acima}</strong></span>
-        <span><span class="status-dot dot-muito-acima"></span> Muito acima: <strong>${muitoAcima}</strong></span>
-      `;
-    }
+  if (bounds.length) map.fitBounds(bounds);
+}
 
-    // -----------------------------
-    // RENDERIZAÇÃO DAS TABELAS
-    // -----------------------------
-    function renderTabelas() {
-      tbodyBloqueados.innerHTML = "";
-      tbodyOutros.innerHTML = "";
+function atualizarLista(lista) {
+  const box = document.getElementById("listaPostos");
+  box.innerHTML = "";
+  const arr = lista.filter(p => p.status==="abaixo" || p.status==="media");
+  document.getElementById("countLista").textContent = `(${arr.length})`;
 
-      const bloqueados = postosFiltrados.filter(p => p.grupo === "bloqueado");
-      const outros = postosFiltrados.filter(p => p.grupo !== "bloqueado");
+  arr.forEach(p=>{
+    box.innerHTML += `
+      <div style="border-bottom:1px dashed #ccc; padding:5px;">
+        <strong>${p.nome}</strong><br>
+        ${p.endereco}<br>
+        ${p.cidade}/${p.uf}<br>
+        Comb.: ${p.combustivel}<br>
+        Desvio: ${p.desvio}% | Preço: R$ ${p.preco}
+      </div>`;
+  });
+}
 
-      // BLOQUEADOS
-      bloqueados.forEach(p => {
-        const tr = document.createElement("tr");
-        tr.dataset.id = p.id;
+function atualizarTabela(lista) {
+  const tbody = document.getElementById("tabelaAcima");
+  tbody.innerHTML = "";
+  const arr = lista.filter(p => p.status==="acima" || p.status==="muito")
+                   .sort((a,b)=> (b.desvio || 0) - (a.desvio || 0));
 
-        tr.innerHTML = `
-          <td class="col-nome">${p.nome}</td>
-          <td>${p.cidade} / ${p.uf}</td>
-          <td class="col-endereco">${p.logradouro}</td>
-          <td class="col-valores">${formatarDesvio(p.desvio)}</td>
-        `;
+  document.getElementById("countTabela").textContent = `(${arr.length})`;
 
-        tr.addEventListener("click", () => selecionarPosto(p));
-        tbodyBloqueados.appendChild(tr);
-      });
+  arr.forEach(p=>{
+    tbody.innerHTML += `
+      <tr>
+        <td>${p.nome}</td>
+        <td>${p.cidade}/${p.uf}</td>
+        <td>${p.combustivel}</td>
+        <td>${p.desvio}%</td>
+        <td>R$ ${p.preco}</td>
+        <td>${p.status}</td>
+      </tr>`;
+  });
+}
 
-      // OUTROS (na média / acima / muito acima / abaixo)
-      outros.forEach(p => {
-        const tr = document.createElement("tr");
-        tr.dataset.id = p.id;
+async function atualizarInterface() {
+  const filtrados = filtrar();
+  atualizarContadores(filtrados);
+  atualizarLista(filtrados);
+  atualizarTabela(filtrados);
+  atualizarMapa(filtrados);
+}
+</script>
 
-        const badge = criarBadgeStatus(p.grupo, p.blacklist);
-
-        tr.innerHTML = `
-          <td class="col-nome">${p.nome}</td>
-          <td>${badge}</td>
-          <td>${p.cidade} / ${p.uf}</td>
-          <td class="col-valores">${formatarDesvio(p.desvio)}</td>
-          <td class="col-valores">${formatarPreco(p.preco)}</td>
-        `;
-
-        tr.addEventListener("click", () => selecionarPosto(p));
-        tbodyOutros.appendChild(tr);
-      });
-
-      // Reaplicar estilo de selecionado
-      marcarLinhaSelecionada();
-    }
-
-    function criarBadgeStatus(grupo, textoOriginal) {
-      let classe = "";
-      let label = textoOriginal || "";
-
-      switch (grupo) {
-        case "abaixo":
-          classe = "badge-abaixo";
-          if (!label) label = "Abaixo da média";
-          break;
-        case "na_media":
-          classe = "badge-media";
-          if (!label) label = "Na média";
-          break;
-        case "acima":
-          classe = "badge-acima";
-          if (!label) label = "Acima da média";
-          break;
-        case "muito_acima":
-          classe = "badge-muito-acima";
-          if (!label) label = "Muito acima da média";
-          break;
-        default:
-          classe = "badge-media";
-          if (!label) label = "Não classificado";
-      }
-
-      return `<span class="badge-status ${classe}">${label}</span>`;
-    }
-
-    // -----------------------------
-    // MAPA (SEM LAT / LONG)
-    // -----------------------------
-    function selecionarPosto(posto) {
-      postoSelecionado = posto;
-      marcarLinhaSelecionada();
-      atualizarMapa();
-    }
-
-    function marcarLinhaSelecionada() {
-      document.querySelectorAll("tbody tr").forEach(tr => {
-        tr.classList.remove("selecionado");
-      });
-
-      if (!postoSelecionado) return;
-
-      const idSel = postoSelecionado.id;
-      document.querySelectorAll(`tbody tr[data-id="${idSel}"]`).forEach(tr => {
-        tr.classList.add("selecionado");
-      });
-    }
-
-    function limparSelecaoMapaSeNecessario() {
-      if (!postoSelecionado) return;
-      if (!postosFiltrados.find(p => p.id === postoSelecionado.id)) {
-        postoSelecionado = null;
-        mapNome.textContent = "Nenhum posto selecionado";
-        mapEndereco.innerHTML = "Use os filtros e clique em um posto para visualizar o local no mapa.";
-        btnAbrirMaps.disabled = true;
-        mapFrame.style.display = "none";
-        mapPlaceholder.style.display = "flex";
-      }
-    }
-
-    function atualizarMapa() {
-      if (!postoSelecionado) return;
-
-      const enderecoCompleto = `${postoSelecionado.logradouro}, ${postoSelecionado.cidade} - ${postoSelecionado.uf}, Brasil`;
-
-      mapNome.textContent = postoSelecionado.nome;
-      mapEndereco.textContent = enderecoCompleto;
-
-      // Só habilita o botão e troca o mapa automaticamente
-      // se o posto estiver ABAIXO DA MÉDIA
-      const isAbaixo = postoSelecionado.grupo === "abaixo";
-
-      const urlMapsEmbed = "https://www.google.com/maps?q=" +
-        encodeURIComponent(enderecoCompleto) +
-        "&output=embed";
-
-      const urlMapsDireto = "https://www.google.com/maps/search/?api=1&query=" +
-        encodeURIComponent(enderecoCompleto);
-
-      // Atualiza o iframe sempre que selecionar
-      mapFrame.src = urlMapsEmbed;
-      mapFrame.style.display = "block";
-      mapPlaceholder.style.display = "none";
-
-      // Botão "Abrir no Google Maps" funciona sempre,
-      // mas se você quiser, pode travar para só abaixo da média:
-      // btnAbrirMaps.disabled = !isAbaixo;
-      // Para ficar liberado pra todos:
-      btnAbrirMaps.disabled = false;
-
-      btnAbrirMaps.onclick = () => {
-        window.open(urlMapsDireto, "_blank");
-      };
-    }
-  </script>
 </body>
 </html>
